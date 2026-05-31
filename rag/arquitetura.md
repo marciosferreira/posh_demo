@@ -23,36 +23,21 @@ o orquestrador a completar o fluxo.
 
 ## Sub-agente analista
 
-Ativado pelo orquestrador via `consultar_analista()`. Executa análises em quatro etapas obrigatórias:
+Ativado pelo orquestrador via `consultar_analista()`. Executa análises em três etapas obrigatórias:
 
-1. `read_skill(filename)` — lê as instruções da skill correta para o tipo de análise
-2. `calcular_periodo()` + `chamar_api()` — busca dados da API REST e os injeta como DataFrame
-   no ambiente (os dados **não** passam pelo LLM — ficam em memória)
-3. `analisar_dataframe(script)` — executa código Python/Pandas, podendo gerar gráfico
-   (`result = fig`) ou tabela (`result = df`)
-4. Redige a resposta final com os resultados reais
+1. `read_skill('analise_sql_livre.md')` — lê schema, relacionamentos e regras SQL
+2. `executar_sql(query, chave)` — executa SELECT no PostgreSQL e injeta DataFrame no ambiente
+3. `analisar_dataframe(script)` — processa com pandas, gera gráfico (`result = fig`) ou tabela (`result = df`)
 
-O ambiente de execução persiste entre chamadas na mesma sessão (estilo Jupyter) —
-DataFrames criados em um passo ficam disponíveis nos passos seguintes.
+O ambiente persiste entre chamadas na mesma sessão (estilo Jupyter) — DataFrames criados em um passo ficam disponíveis nos seguintes.
 
-Para análises que a API não cobre diretamente (JOINs, rankings, cruzamentos), o sub-agente
-usa `executar_sql()` com queries SELECT direto no banco SQLite.
+**Nunca usa `chamar_api` para análises** — toda consulta vai direto ao banco via SQL.
 
-### Skills disponíveis para o sub-agente
+### Skill do sub-agente
 
-| Arquivo                     | O que cobre                                                      |
-|-----------------------------|------------------------------------------------------------------|
-| `analise_producao.md`       | Produção diária vs meta, FPY, OEE, defeitos por linha e turno   |
-| `analise_sql_livre.md`      | Análise ad-hoc via SQL — qualquer consulta que a API não oferece |
-| `defeitos_por_categoria.md` | Volume de defeitos por categoria no período                      |
-| `eficiencia_por_turno.md`   | Comparativo de eficiência entre turnos A, B e C                  |
-| `fpy_historico.md`          | Histórico de First Pass Yield ao longo do tempo                  |
-| `oee_historico.md`          | Histórico de OEE e seus componentes (disponibilidade, performance)|
-| `producao_diaria_vs_meta.md`| Produção diária comparada à meta planejada                       |
-| `producao_por_hora.md`      | Perfil intradiário hora a hora (requer turno)                    |
-| `producao_por_linha.md`     | Produção comparativa entre as quatro linhas                      |
-| `status_linhas.md`          | Status em tempo real de cada linha                               |
-| `tendencia_defeitos.md`     | Evolução diária de defeitos por categoria                        |
+| Arquivo | O que cobre |
+|---------|-------------|
+| `analise_sql_livre.md` | Única skill de análise — toda pergunta de dados, simples ou complexa |
 
 ## Sub-agente de scheduling
 

@@ -517,32 +517,7 @@ def rag_dominio() -> str:
     o que cada painel do dashboard exibe, como interpretar os indicadores,
     turnos (A/B/C), granularidade dos dados (diária vs horária).
     """
-    base = (_RAG_DIR / "dominio.md").read_text(encoding="utf-8")
-
-    # Injeta o mapeamento atual linha→modelo diretamente do banco
-    try:
-        import sqlite3 as _sq3
-        conn = _sq3.connect(DB_PATH)
-        rows = conn.execute(
-            "SELECT id, name, model FROM lines_status ORDER BY id"
-        ).fetchall()
-        conn.close()
-        if rows:
-            tabela = "\n## Mapeamento atual linha → modelo (lido ao vivo do banco)\n\n"
-            tabela += "| line= | Linha  | Modelo atual |\n"
-            tabela += "|-------|--------|--------------|\n"
-            for lid, lname, lmodel in rows:
-                tabela += f"| `line={lid}` | {lname} | {lmodel} |\n"
-            tabela += (
-                "\n> **Regra obrigatória:** quando o usuário mencionar um modelo pelo nome "
-                "(ex: \"PhoneX Pro\"), use esta tabela para encontrar o `line=` correto e "
-                "filtre sempre por linha, nunca por nome de modelo.\n"
-            )
-            base += tabela
-    except Exception:
-        pass  # banco indisponível — retorna só o texto estático
-
-    return base
+    return (_RAG_DIR / "dominio.md").read_text(encoding="utf-8")
 
 
 @tool
@@ -879,10 +854,14 @@ def chamar_api(url: str, chave: str, params: Optional[dict] = None) -> str:
 
 @tool
 def executar_sql(query: str, chave: str) -> str:
-    """Executa uma query SQL SELECT no banco MFG e injeta o resultado como DataFrame no ambiente.
+    """Executa uma query SQL SELECT no banco PostgreSQL (schema brazil) e injeta o resultado como DataFrame no ambiente.
 
     Use esta tool quando nenhuma outra skill cobrir o pedido — análises ad-hoc que precisam
     cruzar tabelas (JOIN), rankings, ou qualquer consulta que a API não oferece.
+
+    O search_path é fixado em 'brazil', então você pode referenciar as tabelas sem prefixo:
+      purchase_order, order_item, product, customer, city
+    Ou com prefixo explícito: brazil.purchase_order, etc.
 
     O DataFrame fica disponível como variável com o nome da chave (ex: chave='resultado'
     → variável `resultado` no ambiente para uso em analisar_dataframe).
@@ -891,12 +870,11 @@ def executar_sql(query: str, chave: str) -> str:
     Não use SELECT * — liste apenas as colunas necessárias.
 
     Args:
-        query: Query SQL SELECT a ser executada (ex: 'SELECT date, SUM(produced) FROM production GROUP BY date').
+        query: Query SQL SELECT a ser executada (ex: 'SELECT status::text, COUNT(*) FROM purchase_order GROUP BY status').
         chave: Nome da variável no ambiente onde o DataFrame será armazenado (ex: 'resultado', 'dados').
     """
     _tlog("executar_sql", "CHAMADA", query=query, chave=chave)
 
-    # Segurança: apenas SELECT
     normalized = query.strip().lstrip("(").upper()
     if not normalized.startswith("SELECT"):
         msg = "Apenas queries SELECT são permitidas. Instrução rejeitada."
@@ -904,10 +882,19 @@ def executar_sql(query: str, chave: str) -> str:
         return msg
 
     try:
-        conn = sqlite3.connect(str(DB_PATH))
-        conn.row_factory = sqlite3.Row
-        df = pd.read_sql_query(query, conn)
-        conn.close()
+        import psycopg2
+        conn = psycopg2.connect(
+            host=os.getenv("POSH_DB_HOST", "127.0.0.1"),
+            port=int(os.getenv("POSH_DB_PORT", "5432")),
+            user=os.getenv("POSH_DB_USER", "postgres"),
+            password=os.getenv("POSH_DB_PASSWORD", "Moto#1234"),
+            dbname=os.getenv("POSH_DB_NAME", "postgres"),
+            options="-c search_path=brazil -c default_transaction_read_only=on",
+        )
+        try:
+            df = pd.read_sql_query(query, conn)
+        finally:
+            conn.close()
         ns = _ns_get()
         ns[chave] = df
         msg = (
@@ -1209,9 +1196,9 @@ def _build_sub_agent(llm):
         "- Retorne via ctx.save_chart(fig), ctx.generate_pdf(titulo, conteudo) ou ctx.generate_excel(df, nome)\n"
         "- NUNCA retorne a figura diretamente — sempre passe por ctx.save_chart(fig)\n"
         "- Para relatórios periódicos (daily/weekly/monthly): use from_date e to_date recebidos como params\n"
-        "  exemplo: ctx.api(f'/production/historical?from={from_date}&to={to_date}')\n"
+        "  exemplo: ctx.api(f'/brazil/purchase-orders?from={from_date}&to={to_date}')\n"
         "- Para monitores (every_Xm/every_Xh): use ctx.today() para a data\n"
-        "  exemplo: hoje = ctx.today(); ctx.api(f'/metrics?from={hoje}&to={hoje}')\n"
+        "  exemplo: hoje = ctx.today(); ctx.api(f'/brazil/orders/summary?from={hoje}&to={hoje}')\n"
         "- Se a mensagem contiver um bloco de REGRAS DO SANDBOX, siga-as com prioridade máxima\n"
         "- NÃO use df.to_markdown() no conteúdo do PDF — use apenas bullet points e tokens [chart:uuid]\n\n"
         f"## Skills disponíveis\n{catalogo}\n\n"
@@ -1484,11 +1471,11 @@ def _build_scheduler_agent(llm):
         "```python\n"
         "def run(from_date, to_date, ctx):\n"
         "    from_d, to_d = ctx.date_range(days=7)\n"
-        "    dados = ctx.api(f'/production/historical?from={from_d}&to={to_d}')\n"
+        "    dados = ctx.api(f'/brazil/purchase-orders?from={from_d}&to={to_d}')\n"
         "    df = pd.DataFrame(dados)\n"
         "    fig, ax = plt.subplots(figsize=(10, 4))\n"
-        "    ax.bar(df['date'], df['produced'], color='steelblue')\n"
-        "    ax.set_title('Produção Diária')\n"
+        "    ax.bar(df['issue_date'], df['order_number'], color='steelblue')\n"
+        "    ax.set_title('Pedidos por Data')\n"
         "    token_chart = ctx.save_chart(fig)\n"
         "    # NÃO use to_markdown() — causa erro de layout no PDF\n"
         "    # Use apenas bullet points com valores agregados\n"
@@ -2215,15 +2202,15 @@ def _build_orchestrator(llm, checkpointer=None):
         "   Template COMPLETO e correto (copie e adapte):\n"
         "   ```python\n"
         "   def run(from_date, to_date, ctx):\n"
-        "       raw = ctx.api(f'/defects?from={from_date}&to={to_date}')\n"
-        "       df = pd.DataFrame(raw)  # OBRIGATÓRIO: converter list→DataFrame\n"
-        "       labels = df['category'].tolist()\n"
-        "       values = df['count'].tolist()\n"
+        "       raw = ctx.api(f'/brazil/order-items/summary?from={from_date}&to={to_date}')\n"
+        "       df = pd.DataFrame(raw['by_status'])  # OBRIGATÓRIO: converter list→DataFrame\n"
+        "       labels = df['status'].tolist()\n"
+        "       values = df['total_items'].tolist()\n"
         "       return {\n"
         "           'type': 'pie',\n"
         "           'data': {\n"
         "               'labels': labels,\n"
-        "               'datasets': [{'label': 'Defeitos', 'data': values}]\n"
+        "               'datasets': [{'label': 'Itens por Status', 'data': values}]\n"
         "           }\n"
         "       }\n"
         "   ```\n\n"

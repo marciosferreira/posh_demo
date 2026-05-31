@@ -1,147 +1,76 @@
-# Domínio industrial — MFG Control AI
+# Domínio de negócio — Brazil Purchase Orders
 
 ## O que é este sistema
 
-Plataforma de monitoramento industrial para uma fábrica de smartphones. Exibe indicadores
-de produção, qualidade e status das linhas em tempo real, com análises sob demanda em
-linguagem natural.
+Plataforma de gestão de pedidos de compra (purchase orders) para a operação Brazil. Recebe pedidos de clientes via importação de arquivo, processa e classifica cada pedido e seus itens (aprovado, inconsistência, pendente, rejeitado), e fornece visibilidade sobre o pipeline de vendas, volumes por cliente, produto e status.
 
-## Linhas de produção e modelos
+## Fluxo de um pedido
 
-A fábrica tem 4 linhas de produção. **Cada linha é o identificador estável** — o modelo que ela produz pode mudar ao longo do tempo.
+1. **Importação** — arquivo de pedido enviado pelo cliente é importado via `file_import`
+2. **Criação do PO** — `purchase_order` criado com status inicial `INCONSISTENCY`
+3. **Validação dos itens** — cada `order_item` é classificado: produto/acessório resolvido ou não
+4. **Resolução** — pedidos com inconsistência podem ser resolvidos via `alert_resolve`
+5. **Status final** — `APPROVED`, `REJECTED` ou mantido em `PENDING`
 
-| Linha   | Modelo atual (pode mudar)  |
-|---------|----------------------------|
-| Linha 1 | PhoneX Pro                 |
-| Linha 2 | PhoneX Lite                |
-| Linha 3 | PhoneX Ultra               |
-| Linha 4 | PhoneX Mini                |
+## Status de purchase_order
 
-> Os modelos acima refletem a atribuição atual. Para saber o modelo vigente de cada linha, consulte `/lines` (retorna `id`, `name`, `model`).
->
-> **Sempre filtre por linha (`line=1`, `line=2`, etc.), nunca por nome de modelo.** O nome do modelo é informação de contexto — o filtro correto e estável é o número da linha.
+| Status | Significado |
+|--------|-------------|
+| `APPROVED` | Pedido aprovado e processado com sucesso |
+| `INCONSISTENCY` | Pedido com problemas de validação — aguarda resolução |
+| `PENDING` | Pedido em análise |
+| `REJECTED` | Pedido rejeitado |
 
-## Turnos
+## Status de order_item
 
-| Turno | Horário      |
-|-------|--------------|
-| A     | 06h às 13h   |
-| B     | 14h às 21h   |
-| C     | 22h às 05h   |
+Itens individuais do pedido têm seu próprio status, independente do PO.
 
-## KPIs do topo do dashboard
+## Campos de data em purchase_order
 
-Exibidos no cabeçalho com filtros de período, turno e linha:
+| Campo | Significado |
+|-------|-------------|
+| `issue_date` | Data de emissão do pedido pelo cliente — **a data "oficial" do pedido** |
+| `created_at` | Data/hora de entrada no sistema (importação) |
+| `delivery_month` | Mês de entrega previsto pelo cliente |
 
-| KPI              | O que mostra                                                    |
-|------------------|-----------------------------------------------------------------|
-| Produzido        | Total de unidades no período + % atingida da meta               |
-| First Pass Yield | FPY % do período com status OK ou Abaixo da meta (95%)          |
-| Taxa de defeito  | % de unidades com defeito + contagens de scrap e retrabalho     |
-| OEE              | Eficiência global % com referência à meta de 85%                |
-| Downtime         | Minutos de paradas não planejadas no período                    |
+**Para filtros temporais de "pedidos de hoje/esta semana/etc", use `issue_date`** — ela representa quando o pedido foi feito. Use `created_at` apenas quando a pergunta for sobre quando o pedido foi importado no sistema.
 
-## Painéis do dashboard
+## Entidades principais
 
-### Produção diária vs meta
+### Clientes (`customer`)
+- Identificados por `name` (razão social), `customer_short` (nome abreviado) e `cnpj`
+- Organizados por `channel` (canal de venda) e `state` (estado/UF)
+- Agrupados por `regional`
 
-Gráfico misto (barras + linha) mostrando volume diário de produção e defeitos contra a meta.
+### Produtos (`product`) e Acessórios (`accessory`)
+- Identificados por `part_number` (único) e `market_name` / `local_market_name`
+- Agrupados por `product_group` (ex: `SMARTPHONE`, `TABLET`, `ACESSÓRIO`)
+- Especificações: `ram`, `rom`, `local_color`, `origin`
 
-- **Produzido** (barras azuis): unidades finalizadas por dia
-- **Defeitos** (barras vermelhas): unidades com defeito por dia
-- **Meta** (linha tracejada cinza): meta diária planejada
-- Filtros: período (7d/14d/30d/hoje), turno (Todos/A/B/C), linha
+### Itens de pedido (`order_item`)
+- Cada PO tem 1..N itens
+- Campos principais: `quantity`, `value_price_total`, `product_group`, `delivery_week`
+- Um item pode ser sem produto vinculado (`product_id IS NULL`) — indica inconsistência de mapeamento
 
-### First Pass Yield — histórico
+## KPIs e métricas relevantes
 
-Gráfico de linha mostrando a evolução do FPY ao longo do tempo.
+| Métrica | Como calcular |
+|---------|---------------|
+| Total de pedidos | `COUNT(*)` em `purchase_order` |
+| Pedidos aprovados | `COUNT(*) WHERE status = 'APPROVED'` |
+| Taxa de aprovação | `pedidos aprovados / total × 100%` |
+| Pedidos com inconsistência | `COUNT(*) WHERE status = 'INCONSISTENCY'` |
+| Volume por cliente | `COUNT(*)` agrupado por `customer_name` ou `customer_id` |
+| Quantidade total de itens | `SUM(oi.quantity)` em `order_item` |
+| Valor total | `SUM(oi.value_price_total)` em `order_item` |
+| Produtos mais pedidos | `COUNT(oi.id)` ou `SUM(oi.quantity)` agrupado por `product_group` / `part_number` |
+| Tempo de processamento | `AVG(EXTRACT(EPOCH FROM (created_at - issue_date)) / 86400)` em dias |
 
-- **FPY %** (linha verde com área sombreada): percentual de unidades aprovadas na primeira inspeção sem retrabalho
-- **Meta** (linha tracejada vermelha, fixa em 95%): referência de qualidade
-- FPY = (unidades sem defeito / total produzido) × 100%
-- Eixo Y: de 85% a 100%
-- Filtros: período, turno, linha
+## Canais de venda
 
-### Produção por linha — comparativo
+O campo `customer.channel` identifica o canal. Use `channel::text` nas queries. Os valores existem como enum no banco — use `SELECT DISTINCT channel::text FROM customer` para listar.
 
-Barras agrupadas comparando a produção diária entre as quatro linhas.
+## Regiões e estados
 
-- **Linha 1 — PhoneX Pro** (azul)
-- **Linha 2 — PhoneX Lite** (verde)
-- **Linha 3 — PhoneX Ultra** (amarelo)
-- **Linha 4 — PhoneX Mini** (roxo)
-- Filtros: período, turno
-
-### OEE — eficiência global
-
-Gráfico de múltiplas linhas mostrando OEE e seus dois componentes mensuráveis.
-
-- **OEE** (linha roxa sólida): eficiência global dos equipamentos
-- **Disponib.** (linha verde tracejada): disponibilidade — tempo operando / tempo planejado
-- **Perf.** (linha azul tracejada): performance — velocidade real / velocidade nominal
-- OEE = Disponibilidade × Performance × FPY (qualidade)
-- Eixo Y: de 65% a 100%
-- Meta padrão: 85%. OEE ≥ 85% é considerado classe mundial.
-- Filtros: período, turno, linha
-
-### Status das linhas — AGORA
-
-Painel em tempo real mostrando o estado atual de cada linha, sem filtro de data.
-
-- **Status**: Rodando (verde) / Parada (vermelho) / Manutenção (amarelo)
-- **Progresso**: barra de progresso com unidades produzidas até o momento vs meta do dia
-- **FPY**: First Pass Yield atual da linha
-- Exibe as quatro linhas com modelo e operador responsável
-
-### Produção por hora
-
-Gráfico misto com dois eixos Y mostrando o perfil intradiário de um turno.
-
-- **Produção** (barras azuis, eixo esquerdo): média de unidades produzidas por hora com barras de erro ±1 desvio padrão
-- **Meta/hora** (linha tracejada cinza, eixo esquerdo): meta média por hora
-- **Defeitos** (barras vermelhas, eixo direito): média de defeitos por hora com barras de erro ±1 desvio padrão
-- Turno é obrigatório (A, B ou C) — cada turno cobre 8 horas
-- Filtros: período, turno (obrigatório), modelo
-
-### Eficiência por turno
-
-Barras agrupadas comparando a eficiência dos três turnos ao longo do período.
-
-- **Turno A** (barras azuis)
-- **Turno B** (barras verdes)
-- **Turno C** (barras roxas)
-- Eixo Y: de 65% a 100%
-- Filtros: período, linha
-
-### Defeitos por categoria
-
-Barras horizontais mostrando o volume de defeitos por tipo no período.
-
-- Categorias: Tela (display), Câmera, Bateria, Placa-mãe, Chassi / Carcaça, Conector USB, Outros
-- Cada categoria tem uma cor fixa (vermelho, laranja, roxo, azul, verde, amarelo, cinza)
-- Filtros: período, turno, linha
-
-### Tendência de defeitos
-
-Gráfico de múltiplas linhas mostrando a evolução diária de cada categoria de defeito.
-
-- **Tela** (linha vermelha sólida): defeitos de tela por dia
-- **Câmera** (linha laranja tracejada): defeitos de câmera por dia
-- **Bateria** (linha roxa tracejada): defeitos de bateria por dia
-- **Outros** (linha verde sólida): demais defeitos por dia
-- Filtros: período, turno, linha
-
-## Como interpretar os dados
-
-- OEE baixo com Disponib. alta mas Perf. baixa → micro-paradas ou lentidão operacional, não falhas de equipamento
-- Produção abaixo da meta com OEE normal → problema de planejamento ou capacidade, não de equipamento
-- FPY caindo com linha crescente no gráfico de tendência de defeitos → investigar a categoria que está subindo
-- Diferença de eficiência entre turnos → investigar operador, setup ou condições específicas do turno
-- Linha com progresso baixo no painel de status com status "Rodando" → linha operando abaixo da velocidade nominal
-- Downtime alto com Disponib. baixa no OEE → paradas não planejadas impactando a produção
-
-## Granularidade dos dados
-
-- Histórico: granularidade diária (um ponto por dia)
-- Intradiário: granularidade horária — disponível apenas no painel "Produção por hora", requer turno
-- Status das linhas: snapshot em tempo real, sem filtro de data
+`customer.state` contém a UF (sigla do estado brasileiro) como enum — cast: `state::text`.
+`customer.regional` contém a regional comercial como texto livre.

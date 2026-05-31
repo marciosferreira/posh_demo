@@ -1,242 +1,325 @@
-﻿# skill: analise_sql_livre
-# descricao: Análise ad-hoc via SQL direto no banco — use quando nenhuma outra skill cobrir o pedido. Acesso completo a todas as tabelas.
-# palavras-chave: sql, consulta, ad-hoc, livre, cruzamento, join, correlação, ranking, personalizado, customizado, combinação de tabelas
+# skill: analise_sql_livre
+# descricao: Skill única de análise de dados — toda pergunta sobre pedidos, itens, clientes, erros, alertas ou produtos usa esta skill. Executa SQL direto no PostgreSQL e processa com pandas.
+# palavras-chave: pedidos, itens, clientes, produtos, erros, alertas, sql, análise, gráfico, tabela, relatório, quantidade, valor, status, período, ranking, cruzamento, join
 
 ---
 
-## Quando usar esta skill
+## Esta é a única skill de análise
 
-Use esta skill **somente quando** o pedido do usuário não puder ser atendido por nenhuma outra skill disponível (por exemplo, cruzamentos de tabelas, análises que mesclam produção + defeitos + métricas em uma única query, rankings, ou qualquer análise que exija SQL customizado).
+Use para qualquer pergunta sobre dados: simples ou complexa, uma tabela ou várias, quantidade ou valor, listagem ou agrupamento. Não existe outra skill de consulta.
 
 ---
 
 ## Fluxo obrigatório
 
 ```
-1. read_skill('analise_sql_livre.md')          ← você já está aqui
-2. executar_sql(query=<SELECT...>, chave=<nome>) ← injeta DataFrame no ambiente
-3. analisar_dataframe(script)                  ← processa e gera resultado
+1. read_skill('analise_sql_livre.md')            ← você já está aqui
+2. executar_sql(query=<SELECT...>, chave=<nome>)  ← executa SQL e injeta DataFrame
+3. analisar_dataframe(script)                    ← processa com pandas e gera resultado
 ```
 
-**NÃO chame `calcular_periodo` nem `chamar_api` neste fluxo.** As datas devem ser calculadas diretamente no SQL usando a data de hoje informada no prompt.
+**Nunca use `chamar_api` para análises.** Calcule datas diretamente no SQL com funções PostgreSQL.
 
 ---
 
-## Regras de segurança
+## Modo agendamento — task_code com ctx.sql()
 
-- Apenas `SELECT` é permitido. Qualquer outra instrução (`INSERT`, `UPDATE`, `DELETE`, `DROP`, `CREATE`, etc.) será rejeitada automaticamente com erro.
-- Não use `SELECT *` — liste as colunas que precisa para manter o DataFrame enxuto.
+Quando a análise for para agendamento (`[PARA_AGENDAMENTO]`), o `task_code` **deve usar `ctx.sql()`**.
+Use f-string com `{from_date}` e `{to_date}` — nunca datas literais fixas.
 
----
-
-## Schema completo do banco
-
-### Tabela `production`
-Uma linha por combinação (date, shift, line, model) — dados granulares de produção.
-
-| Coluna   | Tipo    | Descrição                                              |
-|----------|---------|--------------------------------------------------------|
-| id       | INTEGER | PK autoincrement                                       |
-| date     | TEXT    | Data ISO `YYYY-MM-DD`                                  |
-| shift    | TEXT    | Turno: `A`, `B` ou `C`                                 |
-| line     | INTEGER | Linha: `1`, `2`, `3` ou `4`                            |
-| model    | TEXT    | Modelo: `PhoneX Pro`, `PhoneX Lite`, `PhoneX Ultra`, `PhoneX Mini` |
-| produced | INTEGER | Unidades produzidas                                    |
-| target   | INTEGER | Meta de produção                                       |
-
-Índices: `date`, `shift`, `line`, `model`
-
----
-
-### Tabela `defects`
-Uma linha por combinação (date, shift, line, category) — defeitos granulares.
-
-| Coluna   | Tipo    | Descrição                                                                                     |
-|----------|---------|-----------------------------------------------------------------------------------------------|
-| id       | INTEGER | PK autoincrement                                                                              |
-| date     | TEXT    | Data ISO `YYYY-MM-DD`                                                                         |
-| shift    | TEXT    | Turno: `A`, `B` ou `C`                                                                        |
-| line     | INTEGER | Linha: `1`, `2`, `3` ou `4`                                                                   |
-| category | TEXT    | Categoria: `Tela (display)`, `Câmera`, `Bateria`, `Placa-mãe`, `Chassi / Carcaça`, `Conector USB`, `Outros` |
-| count    | INTEGER | Quantidade de defeitos                                                                        |
-
-Índices: `date`, `shift`, `line`, `category`
-
----
-
-### Tabela `metrics`
-Uma linha por dia — métricas consolidadas por turno (FPY, OEE, eficiência).
-
-| Coluna              | Tipo  | Descrição                                      |
-|---------------------|-------|------------------------------------------------|
-| id                  | INTEGER | PK autoincrement                             |
-| date                | TEXT  | Data ISO `YYYY-MM-DD` (UNIQUE)                 |
-| label               | TEXT  | Dia da semana abreviado (`Seg`, `Ter`, …)      |
-| fpy_a               | REAL  | First Pass Yield turno A (%)                   |
-| oee_a               | REAL  | OEE turno A (%)                                |
-| fpy_b               | REAL  | First Pass Yield turno B (%)                   |
-| oee_b               | REAL  | OEE turno B (%)                                |
-| fpy_c               | REAL  | First Pass Yield turno C (%)                   |
-| oee_c               | REAL  | OEE turno C (%)                                |
-| availability        | REAL  | Disponibilidade OEE (%)                        |
-| performance         | REAL  | Performance OEE (%)                            |
-| shift_a_efficiency  | INTEGER | Eficiência turno A (%)                       |
-| shift_b_efficiency  | INTEGER | Eficiência turno B (%)                       |
-| shift_c_efficiency  | INTEGER | Eficiência turno C (%)                       |
-
----
-
-### Tabela `hourly_production`
-Uma linha por (date, shift, line, model, hour) — produção hora a hora.
-
-| Coluna   | Tipo    | Descrição                                              |
-|----------|---------|--------------------------------------------------------|
-| id       | INTEGER | PK autoincrement                                       |
-| date     | TEXT    | Data ISO `YYYY-MM-DD`                                  |
-| shift    | TEXT    | Turno: `A`, `B` ou `C`                                 |
-| line     | INTEGER | Linha: `1`, `2`, `3` ou `4`                            |
-| model    | TEXT    | Modelo do produto                                      |
-| hour     | TEXT    | Hora no formato `06h`, `07h`, …, `23h`, `00h`, …`05h` |
-| produced | INTEGER | Unidades produzidas naquela hora                       |
-| target   | INTEGER | Meta horária                                           |
-| defects  | INTEGER | Defeitos naquela hora                                  |
-
-Índices: `date`, `shift`, `model`
-
----
-
-### Tabela `lines_status`
-Snapshot estático do estado atual de cada linha (não tem dados históricos).
-
-| Coluna    | Tipo    | Descrição                                      |
-|-----------|---------|------------------------------------------------|
-| id        | INTEGER | Linha (1–4)                                    |
-| name      | TEXT    | Nome (`Linha 1`, …, `Linha 4`)                 |
-| model     | TEXT    | Modelo sendo produzido                         |
-| status    | TEXT    | `running`, `stopped`, `maintenance`            |
-| produced  | INTEGER | Produção acumulada do dia                      |
-| target    | INTEGER | Meta diária                                    |
-| fpy       | REAL    | FPY atual (%)                                  |
-| speed_pct | INTEGER | Velocidade em % da capacidade                  |
-| operator  | TEXT    | Operador responsável                           |
-
----
-
-### Tabela `alerts`
-Alertas registrados com severidade e linha associada.
-
-| Coluna       | Tipo    | Descrição                                      |
-|--------------|---------|------------------------------------------------|
-| id           | INTEGER | PK autoincrement                               |
-| datetime     | TEXT    | Datetime ISO `YYYY-MM-DDTHH:MM:SS`             |
-| severity     | TEXT    | `critical`, `warning`, `info`                  |
-| line         | INTEGER | Linha relacionada (1–4)                        |
-| message      | TEXT    | Descrição do alerta                            |
-| acknowledged | INTEGER | `0` = não reconhecido, `1` = reconhecido       |
-
----
-
-### Tabela `kpis`
-Snapshot de KPIs por turno (uma linha por turno A/B/C).
-
-| Coluna             | Tipo    | Descrição                             |
-|--------------------|---------|---------------------------------------|
-| shift              | TEXT    | PK: `A`, `B` ou `C`                   |
-| total_produced     | INTEGER | Total produzido no turno              |
-| daily_target       | INTEGER | Meta do turno                         |
-| first_pass_yield   | REAL    | FPY (%)                               |
-| defect_rate        | REAL    | Taxa de defeito (%)                   |
-| downtime_minutes   | INTEGER | Tempo de parada (minutos)             |
-| efficiency         | REAL    | Eficiência (%)                        |
-| scrapped           | INTEGER | Unidades descartadas                  |
-| reworked           | INTEGER | Unidades retrabalhadas                |
-| cycle_time_seconds | REAL    | Tempo de ciclo (segundos)             |
-| oee                | REAL    | OEE (%)                               |
-
----
-
-## Exemplos de queries úteis
-
-### Cruzar produção com defeitos por linha no último mês
-```sql
-SELECT
-    p.date,
-    p.line,
-    SUM(p.produced) AS produced,
-    SUM(p.target)   AS target,
-    COALESCE(SUM(d.count), 0) AS total_defects,
-    ROUND(100.0 * COALESCE(SUM(d.count), 0) / NULLIF(SUM(p.produced), 0), 2) AS defect_rate_pct
-FROM production p
-LEFT JOIN defects d ON p.date = d.date AND p.shift = d.shift AND p.line = d.line
-WHERE p.date >= date('now', '-30 days')
-GROUP BY p.date, p.line
-ORDER BY p.date, p.line
+```python
+def run(from_date, to_date, ctx):
+    rows = ctx.sql(f"""
+        SELECT
+            status::text AS status,
+            COUNT(*) AS total
+        FROM purchase_order
+        WHERE issue_date::date BETWEEN '{from_date}' AND '{to_date}'
+        GROUP BY status
+        ORDER BY total DESC
+    """)
+    df = pd.DataFrame(rows)
+    fig, ax = plt.subplots(figsize=(8, 4))
+    ax.bar(df['status'], df['total'], color='#60a5fa')
+    ax.set_title(f'Pedidos por Status — {from_date} a {to_date}')
+    plt.tight_layout()
+    return ctx.save_chart(fig)
 ```
 
-### Ranking de categorias de defeito por turno
-```sql
-SELECT
-    d.shift,
-    d.category,
-    SUM(d.count) AS total,
-    ROUND(100.0 * SUM(d.count) / SUM(SUM(d.count)) OVER (PARTITION BY d.shift), 1) AS pct
-FROM defects d
-WHERE d.date >= date('now', '-30 days')
-GROUP BY d.shift, d.category
-ORDER BY d.shift, total DESC
-```
-
-### Correlação produção × OEE por dia
-```sql
-SELECT
-    p.date,
-    SUM(p.produced) AS produced,
-    m.oee_a,
-    m.oee_b,
-    m.oee_c,
-    (m.oee_a + m.oee_b + m.oee_c) / 3.0 AS oee_avg
-FROM production p
-JOIN metrics m ON p.date = m.date
-WHERE p.date >= date('now', '-30 days')
-GROUP BY p.date
-ORDER BY p.date
-```
-
-### Produção por hora agregada (perfil intradiário)
-```sql
-SELECT
-    h.hour,
-    h.shift,
-    SUM(h.produced) AS produced,
-    SUM(h.defects)  AS defects
-FROM hourly_production h
-WHERE h.date >= date('now', '-7 days')
-GROUP BY h.shift, h.hour
-ORDER BY h.shift, h.hour
+Para monitores (`every_Xm`/`every_Xh`), use `ctx.today()`:
+```python
+def run(from_date, to_date, ctx):
+    hoje = ctx.today()
+    rows = ctx.sql(f"""
+        SELECT COUNT(*) AS total FROM purchase_order
+        WHERE issue_date::date = '{hoje}' AND status::text = 'INCONSISTENCY'
+    """)
+    total = rows[0]['total']
+    if total > 10:
+        ctx.notify(f'{total} pedidos com inconsistência hoje', value=total, threshold=10)
+    return f'Inconsistências hoje: {total}'
 ```
 
 ---
 
-## Ambiente de execução
+## PostgreSQL — regras críticas
 
-O script em `analisar_dataframe` tem acesso às seguintes bibliotecas pré-importadas:
-
-| Variável | Biblioteca        | Uso principal                    |
-|----------|-------------------|----------------------------------|
-| `pd`     | pandas            | DataFrames, filtros, agregações  |
-| `np`     | numpy             | Operações numéricas              |
-| `plt`    | matplotlib.pyplot | Geração de gráficos              |
-| `stats`  | scipy.stats       | Testes estatísticos              |
-
-A variável definida em `chave` de `executar_sql` fica disponível como DataFrame no ambiente.
-Atribua à variável `result` o que deve ser exibido (figura, DataFrame ou string).
+| Regra | Como aplicar |
+|-------|-------------|
+| Schema | `search_path=brazil` — use nomes de tabela sem prefixo |
+| Enums | Sempre converter com `::text` (ex: `status::text`, `channel::text`) |
+| Data do pedido | `purchase_order.issue_date` — NÃO `date`, NÃO `order_date` |
+| Hoje | `CURRENT_DATE` |
+| Últimos N dias | `issue_date >= CURRENT_DATE - INTERVAL 'N days'` |
+| Este mês | `DATE_TRUNC('month', issue_date) = DATE_TRUNC('month', CURRENT_DATE)` |
+| Formatar data | `TO_CHAR(issue_date, 'YYYY-MM-DD')` ou `'YYYY-MM'` |
+| Apenas SELECT | Qualquer outro comando será rejeitado |
+| Sem SELECT * | Liste sempre as colunas necessárias |
 
 ---
 
-## Geração de gráficos
+## Modelo de dados — o que cada tabela representa
 
-Use `facecolor='white'` no figure e eixos para manter o tema escuro.
-Cores recomendadas: produzido `#60a5fa`, defeitos `#f87171`, meta `#475569` (dashed),
-FPY/verde `#34d399`, OEE/roxo `#a78bfa`, amarelo `#fbbf24`.
-Sempre use `pd.to_datetime(df['date']).dt.strftime('%d/%m')` no eixo X quando houver coluna `date`.
-Atribua `result = fig` para exibir o gráfico.
+### `purchase_order` — pedido de compra
+
+Entidade central. Cada linha é um pedido feito por um cliente, originado de um arquivo importado.
+
+| Coluna | Tipo | Significado |
+|--------|------|-------------|
+| id | integer PK | Identificador interno |
+| order_number | varchar | Número do pedido conforme enviado pelo cliente |
+| customer_id | integer | FK → customer.id |
+| customer_name | varchar | Nome do cliente desnormalizado — prefira JOIN com customer.name |
+| file_import_id | integer | FK → file_import.id — qual arquivo originou este pedido |
+| **issue_date** | timestamp | **Data em que o cliente emitiu o pedido — dimensão temporal principal** |
+| created_at | timestamp | Data de entrada no sistema (importação) |
+| delivery_month | timestamp | Mês em que o cliente deseja receber os produtos |
+| status | enum | `APPROVED` · `INCONSISTENCY` · `PENDING` · `REJECTED` — cast: `status::text` |
+| customer_usage_order | enum | `CU1` · `CU2` — cast: `customer_usage_order::text` |
+| justification_reject | text | Motivo da rejeição (texto livre) |
+
+---
+
+### `order_item` — item de um pedido
+
+Cada pedido tem 1..N itens. Um item é uma linha do pedido: produto específico, quantidade e valor. O status do item é **independente** do status do pedido.
+
+| Coluna | Tipo | Significado |
+|--------|------|-------------|
+| id | integer PK | Identificador interno |
+| purchase_order_id | integer | FK → purchase_order.id |
+| product_id | integer (nullable) | FK → product.id. NULL = produto não encontrado no catálogo |
+| accessory_id | integer (nullable) | FK → accessory.id. NULL = acessório não encontrado |
+| item_number | integer | Posição do item no pedido (1, 2, 3...) |
+| status | enum | `APPROVED` · `INCONSISTENCY` · `PENDING` · `REJECTED` — cast: `status::text` |
+| quantity | integer | Quantidade de unidades pedidas |
+| value_price_total | numeric | Valor monetário total do item |
+| product_group | varchar | Família: `SMARTPHONE` · `TABLET` · `ACESSÓRIO` etc. |
+| local_market_name | varchar | Nome comercial local do produto (como consta no pedido) |
+| local_color | varchar | Cor do produto conforme pedido |
+| delivery_week | varchar | Semana de entrega desejada |
+| **error_type_id** | integer (nullable) | **FK → error_type.id. Preenchido quando o item tem erro. Para o motivo, faça JOIN com error_type** |
+| created_at | timestamp | Data de criação do item no sistema |
+
+> **Armadilha:** `order_item.status = 'INCONSISTENCY'` indica que há um problema, mas o **motivo** está em `error_type.name` via `error_type_id`. Nunca use o status como descrição do erro.
+
+---
+
+### `customer` — cliente
+
+Empresa que realiza pedidos.
+
+| Coluna | Tipo | Significado |
+|--------|------|-------------|
+| id | integer PK | Identificador interno |
+| name | varchar | Razão social completa |
+| customer_short | varchar | Nome abreviado |
+| cnpj | varchar | CNPJ |
+| channel | enum | Canal de venda — cast: `channel::text` |
+| state | enum | Estado (UF) — cast: `state::text` |
+| regional | varchar | Regional comercial |
+| city_id | integer (nullable) | FK → city.id |
+| sold_customer_number | varchar | Código sold-to no ERP |
+| ship_customer_number | varchar | Código ship-to no ERP |
+
+---
+
+### `error_type` — tipos de erro possíveis
+
+Dicionário de erros. Para saber POR QUÊ um item tem inconsistência, faça JOIN aqui.
+
+| Coluna | Tipo | Significado |
+|--------|------|-------------|
+| id | integer PK | Identificador interno |
+| name | enum | Nome do erro — cast: `name::text` |
+
+Valores conhecidos: `CNPJ_CUSTOMER_NOT_IDENTIFIED` · `CNPJ_DELIVERY_NOT_IDENTIFIED` · `PART_NUMBER_NOT_IDENTIFIED` · `INCORRECT_QUANTITY` · `NOT_FOUND_DELIVERY_MONTH` · `ACCESSORY_MISSING_FOR_BUNDLE` · `ACCESSORY_NOT_MAPPED_TO_BUNDLE`
+
+---
+
+### `alert_resolve` — resolução de inconsistências
+
+Representa uma tentativa de resolver as inconsistências de um pedido.
+
+| Coluna | Tipo | Significado |
+|--------|------|-------------|
+| id | integer PK | Identificador interno |
+| purchase_order_id | integer | FK → purchase_order.id — pedido sendo resolvido |
+| customer_id | integer | FK → customer.id |
+| file_import_id | integer | FK → file_import.id |
+| status | enum | `PROCESSED` (resolvido) · `REJECTED` (rejeitado) · `INCONSISTENCY` (ainda pendente) — cast: `status::text` |
+| created_at | timestamp | Quando a resolução foi registrada — **dimensão temporal desta tabela** |
+| notify_reject_date | timestamp | Quando o cliente foi notificado da rejeição |
+
+---
+
+### `alert_resolve_error_type` — erros de uma resolução (N:N)
+
+Tabela de junção entre `alert_resolve` e `error_type`. Um alerta pode ter múltiplos erros.
+
+| Coluna | Tipo | Significado |
+|--------|------|-------------|
+| alert_resolve_id | integer | FK → alert_resolve.id |
+| error_type_id | integer | FK → error_type.id |
+
+---
+
+### `product` — catálogo de produtos
+
+| Coluna | Tipo | Significado |
+|--------|------|-------------|
+| id | integer PK | Identificador interno |
+| part_number | varchar | Código único do produto |
+| market_name | varchar | Nome comercial internacional |
+| local_market_name | varchar | Nome comercial local |
+| product_group | varchar | Família: `SMARTPHONE` · `TABLET` etc. |
+| local_color | varchar | Cor |
+| status | enum | `ACTIVE` · `INACTIVE` — cast: `status::text` |
+| ram | varchar | Memória RAM (ex: `8GB`) |
+| rom | varchar | Armazenamento (ex: `256GB`) |
+| ean | varchar | Código de barras EAN |
+| origin | varchar | Origem do produto |
+
+---
+
+### `accessory` — catálogo de acessórios
+
+| Coluna | Tipo | Significado |
+|--------|------|-------------|
+| id | integer PK | Identificador interno |
+| part_number | varchar | Código único |
+| market_name | varchar | Nome comercial |
+| local_market_name | varchar | Nome local |
+| product_group | varchar | Grupo do acessório |
+| status | enum | `ACTIVE` · `INACTIVE` — cast: `status::text` |
+| ean | varchar | EAN |
+
+---
+
+### `file_import` — arquivos importados
+
+| Coluna | Tipo | Significado |
+|--------|------|-------------|
+| id | integer PK | Identificador interno |
+| file_name | varchar | Nome do arquivo recebido do cliente |
+| file_extension | varchar | Extensão |
+| date_registered | timestamp | Data/hora da importação |
+
+---
+
+### `city` — cidades
+
+| Coluna | Tipo | Significado |
+|--------|------|-------------|
+| id | integer PK | Identificador interno |
+| name | varchar | Nome da cidade |
+
+---
+
+## Grafo de relacionamentos
+
+```
+purchase_order (1) ──→ (N) order_item
+  JOIN: order_item.purchase_order_id = purchase_order.id
+  Para: obter data, cliente e status do pedido ao qual o item pertence
+
+purchase_order (N) ──→ (1) customer
+  JOIN: purchase_order.customer_id = customer.id
+  Para: segmentar pedidos por canal, estado, regional, CNPJ
+
+purchase_order (N) ──→ (1) file_import
+  JOIN: purchase_order.file_import_id = file_import.id
+  Para: rastrear qual arquivo originou o pedido
+
+order_item (N) ──→ (1) product  [nullable]
+  JOIN: order_item.product_id = product.id
+  Para: obter part_number, market_name, ram, rom do produto
+  NULL = produto não identificado no catálogo
+
+order_item (N) ──→ (1) accessory  [nullable]
+  JOIN: order_item.accessory_id = accessory.id
+  Para: obter dados do acessório
+  NULL = acessório não identificado
+
+order_item (N) ──→ (1) error_type  [nullable]
+  JOIN: order_item.error_type_id = error_type.id
+  Para: obter o MOTIVO do erro (ex: PART_NUMBER_NOT_IDENTIFIED)
+  NULL = item sem erro
+
+alert_resolve (N) ──→ (1) purchase_order
+  JOIN: alert_resolve.purchase_order_id = purchase_order.id
+  Para: saber qual pedido está sendo resolvido
+
+alert_resolve (N) ──→ (1) customer
+  JOIN: alert_resolve.customer_id = customer.id
+  Para: agrupar resoluções por cliente
+
+alert_resolve (N) ↔ (N) error_type  [via alert_resolve_error_type]
+  JOIN: alert_resolve_error_type art
+        ON art.alert_resolve_id = alert_resolve.id
+        AND art.error_type_id = error_type.id
+  Para: listar erros associados a cada resolução de alerta
+
+customer (N) ──→ (1) city  [nullable]
+  JOIN: customer.city_id = city.id
+  Para: obter a cidade do cliente
+```
+
+---
+
+## Dimensões disponíveis para análise
+
+| Dimensão | Tabela.Coluna |
+|----------|--------------|
+| Tempo do pedido | `purchase_order.issue_date` |
+| Tempo de entrada no sistema | `purchase_order.created_at` |
+| Mês de entrega | `purchase_order.delivery_month` |
+| Tempo da resolução | `alert_resolve.created_at` |
+| Cliente | `customer.name` · `.channel` · `.state` · `.regional` · `.cnpj` |
+| Status do pedido | `purchase_order.status::text` |
+| Status do item | `order_item.status::text` |
+| Status da resolução | `alert_resolve.status::text` |
+| Motivo do erro | `error_type.name::text` |
+| Tem erro ou não | `order_item.error_type_id IS NOT NULL` |
+| Produto | `product.part_number` · `.market_name` · `.product_group` · `.ram` · `.rom` |
+| Família de produto | `order_item.product_group` (como consta no pedido) |
+| Volume | `order_item.quantity` |
+| Valor | `order_item.value_price_total` |
+| Arquivo de origem | `file_import.file_name` · `.date_registered` |
+
+---
+
+## Ambiente Python (analisar_dataframe)
+
+| Variável | Biblioteca |
+|----------|-----------|
+| `pd` | pandas |
+| `np` | numpy |
+| `plt` | matplotlib.pyplot |
+| `stats` | scipy.stats |
+
+Atribua `result = fig` para gráfico ou `result = df` para tabela.
+
+Cores padrão do sistema: aprovado `#34d399` · inconsistência `#f87171` · pendente `#fbbf24` · rejeitado `#94a3b8` · volume `#60a5fa` · valor `#a78bfa`
+
+Datas no eixo X: `pd.to_datetime(df['col']).dt.strftime('%d/%m')`

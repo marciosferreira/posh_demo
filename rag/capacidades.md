@@ -1,62 +1,70 @@
-# Capacidades do agente — MFG Control AI
+# Capacidades do agente — Brazil Purchase Orders AI
 
-O MFG Control AI é um agente conversacional que responde em linguagem natural.
+O agente responde em linguagem natural sobre pedidos de compra, clientes, produtos, erros e alertas.
 
-## Consultas pontuais (dados sob demanda)
+## Arquitetura simples
 
-O agente busca dados reais da API e os processa em tempo real. Exemplos:
+| Camada | Responsabilidade |
+|--------|-----------------|
+| Endpoints REST | Alimentar os gráficos fixos do dashboard — não são usados pelo agente para análise |
+| `analise_sql_livre` | **Única skill de análise** — toda pergunta de dados usa SQL direto no banco |
 
-- "Mostre a produção dos últimos 7 dias" → gráfico de barras com produção vs meta
-- "Como está o FPY esta semana?" → gráfico de linha com tendência de FPY
-- "Qual linha produziu mais no mês passado?" → comparativo entre Linha 1–4
-- "Me dê uma tabela com produção e defeitos por dia" → tabela markdown com dados reais
-- "Compare a eficiência dos turnos A, B e C" → barras agrupadas por turno
-- "Qual a tendência de defeitos de câmera?" → gráfico de linha por categoria
-- "Gere um relatório PDF da produção de maio" → PDF com gráficos e análise
-- "Exporta os dados de OEE para Excel" → planilha .xlsx para download
+## Como o agente responde perguntas de dados
 
-Períodos aceitos em linguagem natural: "hoje", "ontem", "esta semana", "semana passada", "últimos N dias", "este mês", "mês passado".
+```
+Usuário faz uma pergunta
+      ↓
+Orquestrador → consultar_analista()
+      ↓
+Sub-agente lê analise_sql_livre.md
+      ↓
+Escreve e executa SQL no PostgreSQL
+      ↓
+Processa resultado com pandas
+      ↓
+Responde com tabela ou gráfico
+```
 
-## Perguntas conceituais
+## Tipos de análise suportados
 
-O agente responde sem buscar dados quando a pergunta é sobre definições ou cálculos:
+**Por tempo:** pedidos hoje, esta semana, este mês, últimos N dias, por dia/mês/ano
 
-- "O que é OEE?" / "Como o FPY é calculado?" / "O que significa downtime?"
-- "Qual é a meta de FPY?" / "O que representa o turno C?"
-- "Como interpretar um OEE abaixo de 85%?"
+**Por cliente:** ranking de clientes, por canal, por estado, por regional
 
-## Análise do dashboard atual
+**Por produto:** mais pedidos, por grupo, por part_number, por especificação (ram, rom)
 
-O agente pode descrever e interpretar o que está visível na tela naquele momento:
+**Por status:** pedidos aprovados/pendentes/inconsistentes/rejeitados; itens por status
 
-- "O que está mostrando no gráfico de produção agora?"
-- "Quantos alertas ativos tem?"
-- "Qual é o KPI de OEE que aparece no cabeçalho?"
-- O usuário pode também enviar uma imagem (print do dashboard) para análise visual.
+**Por erro:** quais erros ocorreram, por cliente, por tipo, frequência
 
-## Tarefas agendadas — relatórios e monitores automáticos
+**Por valor:** valor total, valor médio, distribuição por cliente ou produto
 
-O agente pode criar tarefas que rodam automaticamente sem intervenção do usuário.
+**Cruzamentos:** qualquer combinação das dimensões acima via JOIN
 
-### Relatórios periódicos
+## Formatos de saída
 
-- "Toda segunda às 8h me manda o relatório de produção semanal" → tarefa weekly
-- "Todo dia às 7h gera um PDF com o resumo do dia anterior" → tarefa daily
-- "Todo primeiro do mês exporta os dados de defeitos para Excel" → tarefa monthly
+- Tabela markdown
+- Gráfico (barra, linha, pizza, dispersão)
+- PDF com análise e gráficos
+- Planilha Excel para download
 
-### Monitores com alertas
+## Períodos aceitos em linguagem natural
 
-- "Me avise se a produção cair abaixo de 1000 unidades hoje" → monitor every_5m
-- "Alerta se o OEE do turno A ficar abaixo de 80%" → monitor com threshold
-- "Me notifique quando a Linha 1 ficar parada" → monitor de status
+"hoje", "ontem", "esta semana", "semana passada", "últimos N dias", "este mês", "mês passado", "este ano", datas explícitas (ex: "de 01/05 a 28/05")
 
-Frequências suportadas: `once`, `daily`, `weekly`, `monthly`, `every_Xm`, `every_Xh`, `every_Xd`.
+## Tarefas agendadas
 
-Ao criar um monitor, o agente mostra o resultado do teste imediato e o threshold configurado.
-Notificações aparecem como 🔔 no cabeçalho do dashboard.
+O agente pode criar tarefas que rodam automaticamente.
 
-### Gerenciamento de tarefas
+**Relatórios periódicos:**
+- "Toda segunda às 8h me manda o resumo de pedidos da semana"
+- "Todo dia às 7h gera um PDF com os pedidos do dia anterior"
+- "Todo primeiro do mês exporta os dados para Excel"
 
-- "Liste as tarefas agendadas" → mostra ID, nome, status e frequência
-- "Pause a tarefa 003" / "Delete a tarefa 001" / "Edite a tarefa 002"
-- "Editar tarefa 005" → o agente modifica o código, testa e salva automaticamente
+**Monitores com alertas:**
+- "Me avise se chegarem mais de 50 pedidos com inconsistência hoje"
+- "Alerta quando o total de aprovados ficar abaixo de 10 no dia"
+
+Frequências: `once`, `daily`, `weekly`, `monthly`, `every_Xm`, `every_Xh`, `every_Xd`
+
+**Gerenciamento:** "Liste as tarefas", "Pause a tarefa 003", "Delete a tarefa 001"

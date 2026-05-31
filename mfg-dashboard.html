@@ -742,11 +742,6 @@
     <div class="api-status" id="apiStatus">API —</div>
     <div class="live"><div class="dot" id="liveDot"></div><span id="liveLabel">CONECTANDO</span></div>
     <div class="clk" id="clk">--:--:--</div>
-    <span style="display:flex;align-items:center;gap:6px;padding:3px 8px;border:1px dashed rgba(251,191,36,.4);border-radius:4px;background:rgba(251,191,36,.04);">
-      <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#f59e0b;letter-spacing:.12em;">TEST PURPOSE</span>
-      <button id="demoBoostBtn" onclick="demoBoost()" title="[TEST] Simula aumento de produção: seta hoje para +50% dos valores originais" style="background:none;border:1px solid #16a34a;color:#4ade80;font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 8px;cursor:pointer;border-radius:3px;letter-spacing:.04em;transition:opacity .15s;">▲ prod +50%</button>
-      <button id="demoReduceBtn" onclick="demoReduce()" title="[TEST] Simula queda de produção: seta hoje para −50% dos valores originais" style="background:none;border:1px solid #dc2626;color:#f87171;font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 8px;cursor:pointer;border-radius:3px;letter-spacing:.04em;transition:opacity .15s;">▼ prod −50%</button>
-    </span>
     <button class="refresh-btn" id="refreshBtn" onclick="refreshAll()">
       <span class="refresh-icon">↺</span> Atualizar
     </button>
@@ -772,10 +767,10 @@
   <button class="tab-btn active" id="tab-btn-dashboard" onclick="switchTab('dashboard')">
     <i class="fa-solid fa-gauge-high" style="margin-right:5px;"></i> Dashboard
   </button>
-  <button class="tab-btn" id="tab-btn-arquitetura" onclick="switchTab('arquitetura')">
+  <button class="tab-btn" id="tab-btn-arquitetura" onclick="switchTab('arquitetura')" style="display:none">
     <i class="fa-solid fa-diagram-project" style="margin-right:5px;"></i> Arquitetura
   </button>
-  <button class="tab-btn" id="tab-btn-exemplos" onclick="switchTab('exemplos')">
+  <button class="tab-btn" id="tab-btn-exemplos" onclick="switchTab('exemplos')" style="display:none">
     <i class="fa-solid fa-terminal" style="margin-right:5px;"></i> Exemplos
   </button>
   <button onclick="openAudit()" title="Auditoria de erros de geração de código" style="margin-left:auto;background:none;border:1px solid #1e293b;border-radius:5px;color:#475569;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;padding:4px 10px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:color .15s,border-color .15s;" onmouseenter="this.style.color='#94a3b8';this.style.borderColor='#334155';" onmouseleave="this.style.color='#475569';this.style.borderColor='#1e293b';">
@@ -960,273 +955,106 @@
 
 <div class="page">
 
-  <!-- KPI section with own filters -->
+  <!-- KPI section -->
   <div class="section-bar">
-    <div class="section-lbl">Indicadores</div>
+    <div class="section-lbl">Indicadores — Supply Chain Brazil</div>
     <div class="card-controls">
-      <select class="cf-sel" id="kpiRangeSel" onchange="refreshKPIs()">
-        <option value="7d">7 dias</option>
-        <option value="14d">14 dias</option>
-        <option value="30d">30 dias</option>
+      <select class="cf-sel" id="kpiFromSel" onchange="refreshAll()">
         <option value="today">Hoje</option>
-      </select>
-      <select class="cf-sel" id="kpiShiftSel" onchange="refreshKPIs()">
-        <option value="A">Turno A</option>
-        <option value="B">Turno B</option>
-        <option value="C">Turno C</option>
-      </select>
-      <select class="cf-sel" id="kpiLineSel" onchange="refreshKPIs()">
-        <option value="all">Todas as linhas</option>
+        <option value="week">Esta semana</option>
+        <option value="month">Este mês</option>
+        <option value="year">Este ano</option>
+        <option value="lastyear">Ano passado</option>
+        <option value="" selected>Total</option>
       </select>
     </div>
   </div>
   <div class="kpi-row" id="kpiRow"></div>
 
+  <!-- Row 1: Orders by month + Orders by status -->
   <div class="g2">
     <div class="card">
       <div class="card-head">
-        <div class="card-title"><div class="ctdot" style="background:var(--cyan)"></div>Produção diária vs meta</div>
-        <div class="card-controls">
-          <select class="cf-sel" id="prodRangeSel" onchange="refreshProd()">
-            <option value="7d">7 dias</option>
-            <option value="14d">14 dias</option>
-            <option value="30d">30 dias</option>
-            <option value="today">Hoje</option>
-          </select>
-          <select class="cf-sel" id="prodShiftSel" onchange="refreshProd()">
-            <option value="all">Todos os turnos</option>
-            <option value="A">Turno A</option>
-            <option value="B">Turno B</option>
-            <option value="C">Turno C</option>
-          </select>
-          <select class="cf-sel" id="prodLineSel" onchange="refreshProd()">
-            <option value="all">Todas as linhas</option>
-          </select>
-        </div>
+        <div class="card-title"><div class="ctdot" style="background:var(--cyan)"></div>Pedidos por mês</div>
       </div>
       <div class="card-body">
         <div class="legend">
-          <div class="leg"><div class="leg-sq" style="background:rgba(96,165,250,.7)"></div>Produzido</div>
-          <div class="leg"><div class="leg-sq" style="background:rgba(248,113,113,.75)"></div>Defeitos</div>
-          <div class="leg"><div class="leg-line" style="border-top:2px dashed #64748b"></div>Meta diária</div>
+          <div class="leg"><div class="leg-sq" style="background:rgba(96,165,250,.75)"></div>Total pedidos</div>
+          <div class="leg"><div class="leg-sq" style="background:rgba(52,211,153,.75)"></div>Clientes únicos</div>
         </div>
-        <div class="ch-wrap" style="height:230px"><canvas id="prodChart"></canvas></div>
+        <div class="ch-wrap" style="height:230px"><canvas id="ordersMonthChart"></canvas></div>
       </div>
     </div>
     <div class="card">
       <div class="card-head">
-        <div class="card-title"><div class="ctdot" style="background:var(--green)"></div>First Pass Yield — histórico</div>
-        <div class="card-controls">
-          <select class="cf-sel" id="fpyRangeSel" onchange="refreshFpy()">
-            <option value="7d">7 dias</option>
-            <option value="14d">14 dias</option>
-            <option value="30d">30 dias</option>
-            <option value="today">Hoje</option>
-          </select>
-          <select class="cf-sel" id="fpyShiftSel" onchange="refreshFpy()">
-            <option value="all">Todos os turnos</option>
-            <option value="A">Turno A</option>
-            <option value="B">Turno B</option>
-            <option value="C">Turno C</option>
-          </select>
-          <select class="cf-sel" id="fpyLineSel" onchange="refreshFpy()">
-            <option value="all">Todas as linhas</option>
-          </select>
-        </div>
+        <div class="card-title"><div class="ctdot" style="background:var(--red)"></div>Erros de itens por tipo</div>
       </div>
       <div class="card-body">
-        <div class="legend">
-          <div class="leg"><div class="leg-sq" style="background:var(--green)"></div>FPY %</div>
-          <div class="leg"><div class="leg-line" style="border-top:2px dashed var(--red)"></div>Meta 95%</div>
-        </div>
-        <div class="ch-wrap" style="height:230px"><canvas id="fpyChart"></canvas></div>
+        <div class="ch-wrap" style="height:230px"><canvas id="errorsByTypeChart"></canvas></div>
       </div>
     </div>
   </div>
 
-  <div class="g21">
-    <div class="gcol">
-      <div class="card">
-        <div class="card-head">
-          <div class="card-title"><div class="ctdot" style="background:var(--blue)"></div>Produção por linha — comparativo</div>
-          <div class="card-controls">
-            <select class="cf-sel" id="lineCompRangeSel" onchange="refreshLineComp()">
-              <option value="7d">7 dias</option>
-              <option value="14d">14 dias</option>
-              <option value="30d">30 dias</option>
-              <option value="today">Hoje</option>
-            </select>
-            <select class="cf-sel" id="lineCompShiftSel" onchange="refreshLineComp()">
-              <option value="all">Todos os turnos</option>
-              <option value="A">Turno A</option>
-              <option value="B">Turno B</option>
-              <option value="C">Turno C</option>
-            </select>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="legend" id="lineCompLegend">
-            <div class="leg"><div class="leg-sq" style="background:rgba(96,165,250,.8)"></div>Linha 1</div>
-            <div class="leg"><div class="leg-sq" style="background:rgba(52,211,153,.8)"></div>Linha 2</div>
-            <div class="leg"><div class="leg-sq" style="background:rgba(251,191,36,.8)"></div>Linha 3</div>
-            <div class="leg"><div class="leg-sq" style="background:rgba(167,139,250,.8)"></div>Linha 4</div>
-          </div>
-          <div class="ch-wrap" style="height:200px"><canvas id="lineCompChart"></canvas></div>
-        </div>
+  <!-- Row 2: Top customers + Error ratio + Items by status -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px;">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><div class="ctdot" style="background:var(--blue)"></div>Top 10 clientes por pedidos</div>
       </div>
-      <div class="card">
-        <div class="card-head">
-          <div class="card-title"><div class="ctdot" style="background:var(--purple)"></div>OEE — eficiência global</div>
-          <div class="card-controls">
-            <select class="cf-sel" id="oeeRangeSel" onchange="refreshOee()">
-              <option value="7d">7 dias</option>
-              <option value="14d">14 dias</option>
-              <option value="30d">30 dias</option>
-              <option value="today">Hoje</option>
-            </select>
-            <select class="cf-sel" id="oeeShiftSel" onchange="refreshOee()">
-              <option value="all">Todos os turnos</option>
-              <option value="A">Turno A</option>
-              <option value="B">Turno B</option>
-              <option value="C">Turno C</option>
-            </select>
-            <select class="cf-sel" id="oeeLineSel" onchange="refreshOee()">
-              <option value="all">Todas as linhas</option>
-            </select>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="legend">
-            <div class="leg"><div class="leg-sq" style="background:var(--purple)"></div>OEE</div>
-            <div class="leg"><div class="leg-sq" style="background:rgba(52,211,153,.6)"></div>Disponibilidade</div>
-            <div class="leg"><div class="leg-sq" style="background:rgba(96,165,250,.6)"></div>Performance</div>
-          </div>
-          <div class="ch-wrap" style="height:160px"><canvas id="oeeChart"></canvas></div>
-        </div>
+      <div class="card-body">
+        <div class="ch-wrap" style="height:220px"><canvas id="topCustomersChart"></canvas></div>
       </div>
     </div>
-    <div class="gcol">
-      <div class="card" style="flex:1">
-        <div class="card-head">
-          <div class="card-title"><div class="ctdot" style="background:var(--green)"></div>Status das linhas</div>
-          <div class="card-badge">AGORA</div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><div class="ctdot" style="background:var(--red)"></div>Itens com erro vs sem erro</div>
+      </div>
+      <div class="card-body">
+        <div class="ch-wrap" style="height:220px"><canvas id="errorRatioChart"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><div class="ctdot" style="background:var(--purple)"></div>Itens por status</div>
+      </div>
+      <div class="card-body">
+        <div class="legend">
+          <div class="leg"><div class="leg-sq" style="background:rgba(96,165,250,.8)"></div>Qtd. itens</div>
+          <div class="leg"><div class="leg-sq" style="background:rgba(251,191,36,.7)"></div>Valor total (R$)</div>
         </div>
-        <div class="card-body" id="lineStatusWrap"></div>
+        <div class="ch-wrap" style="height:220px"><canvas id="itemStatusChart"></canvas></div>
       </div>
     </div>
   </div>
 
+  <!-- Row 3: Delivery month + Alert resolve by status -->
   <div class="g2">
     <div class="card">
       <div class="card-head">
-        <div class="card-title"><div class="ctdot" style="background:var(--cyan)"></div>Produção por hora</div>
-        <div class="card-controls">
-          <select class="cf-sel" id="hourRangeSel" onchange="refreshHour()">
-            <option value="7d">7 dias</option>
-            <option value="14d">14 dias</option>
-            <option value="30d">30 dias</option>
-            <option value="today">Hoje</option>
-          </select>
-          <select class="cf-sel" id="hourShiftSel" onchange="refreshHour()">
-            <option value="A">Turno A</option>
-            <option value="B">Turno B</option>
-            <option value="C">Turno C</option>
-          </select>
-          <select class="cf-sel" id="hourLineSel" onchange="refreshHour()">
-            <option value="all">Todas as linhas</option>
-          </select>
-        </div>
+        <div class="card-title"><div class="ctdot" style="background:var(--cyan)"></div>Pedidos recebidos por mês de entrega</div>
       </div>
       <div class="card-body">
-        <div class="legend">
-          <div class="leg"><div class="leg-sq" style="background:rgba(96,165,250,.75)"></div>Produção média ±1σ</div>
-          <div class="leg"><div class="leg-sq" style="background:rgba(248,113,113,.75)"></div>Defeitos médios ±1σ</div>
-          <div class="leg"><div class="leg-line" style="border-top:2px dashed #64748b"></div>Meta/hora</div>
-        </div>
-        <div class="ch-wrap" style="height:220px"><canvas id="hourChart"></canvas></div>
+        <div class="ch-wrap" style="height:220px"><canvas id="deliveryMonthChart"></canvas></div>
       </div>
     </div>
     <div class="card">
       <div class="card-head">
-        <div class="card-title"><div class="ctdot" style="background:var(--yellow)"></div>Eficiência por turno</div>
-        <div class="card-controls">
-          <select class="cf-sel" id="shiftRangeSel" onchange="refreshShiftEff()">
-            <option value="7d">7 dias</option>
-            <option value="14d">14 dias</option>
-            <option value="30d">30 dias</option>
-            <option value="today">Hoje</option>
-          </select>
-          <select class="cf-sel" id="shiftLineSel" onchange="refreshShiftEff()">
-            <option value="all">Todas as linhas</option>
-          </select>
-        </div>
+        <div class="card-title"><div class="ctdot" style="background:var(--orange)"></div>Alertas resolvidos por status</div>
       </div>
       <div class="card-body">
-        <div class="legend">
-          <div class="leg"><div class="leg-sq" style="background:rgba(96,165,250,.8)"></div>Turno A</div>
-          <div class="leg"><div class="leg-sq" style="background:rgba(52,211,153,.8)"></div>Turno B</div>
-          <div class="leg"><div class="leg-sq" style="background:rgba(167,139,250,.8)"></div>Turno C</div>
-        </div>
-        <div class="ch-wrap" style="height:220px"><canvas id="shiftChart"></canvas></div>
+        <div class="ch-wrap" style="height:220px"><canvas id="alertResolveStatusChart"></canvas></div>
       </div>
     </div>
   </div>
 
+  <!-- Row 4: Top products + Items by product group -->
   <div class="g2">
     <div class="card">
       <div class="card-head">
-        <div class="card-title"><div class="ctdot" style="background:var(--orange)"></div>Defeitos por categoria</div>
-        <div class="card-controls">
-          <select class="cf-sel" id="defCatRangeSel" onchange="refreshDefCat()">
-            <option value="7d">7 dias</option>
-            <option value="14d">14 dias</option>
-            <option value="30d">30 dias</option>
-            <option value="today">Hoje</option>
-          </select>
-          <select class="cf-sel" id="defCatShiftSel" onchange="refreshDefCat()">
-            <option value="all">Todos os turnos</option>
-            <option value="A">Turno A</option>
-            <option value="B">Turno B</option>
-            <option value="C">Turno C</option>
-          </select>
-          <select class="cf-sel" id="defCatLineSel" onchange="refreshDefCat()">
-            <option value="all">Todas as linhas</option>
-          </select>
-        </div>
+        <div class="card-title"><div class="ctdot" style="background:var(--cyan)"></div>Top 10 produtos — unidades pedidas <span style="font-size:10px;color:var(--txt3);font-weight:400;">(todo o período)</span></div>
       </div>
       <div class="card-body">
-        <div class="ch-wrap" style="height:220px"><canvas id="defChart"></canvas></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-head">
-        <div class="card-title"><div class="ctdot" style="background:var(--red)"></div>Tendência de defeitos</div>
-        <div class="card-controls">
-          <select class="cf-sel" id="defTrendRangeSel" onchange="refreshDefTrend()">
-            <option value="7d">7 dias</option>
-            <option value="14d">14 dias</option>
-            <option value="30d">30 dias</option>
-            <option value="today">Hoje</option>
-          </select>
-          <select class="cf-sel" id="defTrendShiftSel" onchange="refreshDefTrend()">
-            <option value="all">Todos os turnos</option>
-            <option value="A">Turno A</option>
-            <option value="B">Turno B</option>
-            <option value="C">Turno C</option>
-          </select>
-          <select class="cf-sel" id="defTrendLineSel" onchange="refreshDefTrend()">
-            <option value="all">Todas as linhas</option>
-          </select>
-        </div>
-      </div>
-      <div class="card-body">
-        <div class="legend">
-          <div class="leg"><div class="leg-sq" style="background:var(--red)"></div>Tela</div>
-          <div class="leg"><div class="leg-sq" style="background:var(--orange)"></div>Câmera</div>
-          <div class="leg"><div class="leg-sq" style="background:var(--purple)"></div>Bateria</div>
-          <div class="leg"><div class="leg-sq" style="background:var(--green)"></div>Outros</div>
-        </div>
-        <div class="ch-wrap" style="height:185px"><canvas id="defTrendChart"></canvas></div>
+        <div class="ch-wrap" style="height:220px"><canvas id="topProductsChart"></canvas></div>
       </div>
     </div>
   </div>
@@ -1419,298 +1247,265 @@ const errorBarPlugin = {
   }
 };
 
-// linhas disponíveis (carregadas do backend)
-let _lines = [];
-
-async function loadLineSelects() {
-  try {
-    _lines = await api('/lines');
-    const opts = _lines.map(l =>
-      `<option value="${l.id}">${l.name} — ${l.model}</option>`
-    ).join('');
-    const ids = ['kpiLineSel','prodLineSel','fpyLineSel','oeeLineSel',
-                 'hourLineSel','shiftLineSel','defCatLineSel','defTrendLineSel'];
-    ids.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.innerHTML = '<option value="all">Todas as linhas</option>' + opts;
-    });
-  } catch(e) { console.error('loadLineSelects:', e); }
+// ── BRAZIL DATA HELPERS ────────────────────────────────
+function brazilDateParam() {
+  const range = document.getElementById('kpiFromSel').value;
+  const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const today = new Date();
+  if (!range) return '';
+  if (range === 'today') {
+    const f = fmt(today);
+    return `from=${f}&to=${f}`;
+  }
+  if (range === 'week') {
+    const mon = new Date(today);
+    mon.setDate(today.getDate() - today.getDay() + (today.getDay() === 0 ? -6 : 1));
+    return `from=${fmt(mon)}&to=${fmt(today)}`;
+  }
+  if (range === 'month') {
+    const from = new Date(today.getFullYear(), today.getMonth(), 1);
+    return `from=${fmt(from)}&to=${fmt(today)}`;
+  }
+  if (range === 'year') {
+    const from = new Date(today.getFullYear(), 0, 1);
+    return `from=${fmt(from)}&to=${fmt(today)}`;
+  }
+  if (range === 'lastyear') {
+    const from = new Date(today.getFullYear() - 1, 0, 1);
+    const to   = new Date(today.getFullYear() - 1, 11, 31);
+    return `from=${fmt(from)}&to=${fmt(to)}`;
+  }
+  return '';
 }
 
-// SHARED HISTORICAL FETCH
-async function fetchHistorical(range, shift, line = 'all') {
-  const shiftParam = shift !== 'all' ? `&shift=${shift}` : '';
-  const lineParam  = line  !== 'all' ? `&line=${line}`   : '';
-  return api(`/production/historical?${rangeToDates(range)}${shiftParam}${lineParam}`);
-}
+const PALETTE = [
+  'rgba(96,165,250,.8)', 'rgba(52,211,153,.8)', 'rgba(251,191,36,.8)',
+  'rgba(167,139,250,.8)', 'rgba(248,113,113,.8)', 'rgba(251,163,72,.8)',
+  'rgba(34,211,238,.8)', 'rgba(163,230,53,.8)', 'rgba(232,121,249,.8)',
+  'rgba(100,116,139,.7)',
+];
 
 // ── PER-CHART REFRESH FUNCTIONS ────────────────────────
 
-async function refreshKPIs() {
+async function refreshKPIs(ordSum, itmSum) {
   try {
-    const range = sel('kpiRangeSel');
-    const shift = sel('kpiShiftSel');
-    const line  = sel('kpiLineSel');
-    const lineParam = line !== 'all' ? `&line=${line}` : '';
-    const k = await api(`/kpis?shift=${shift}&${rangeToDates(range)}${lineParam}`);
-    const pct = Math.round(k.total_produced / k.daily_target * 100);
-    const rangeLabel = { '7d':'(7 dias)', '14d':'(14 dias)', '30d':'(30 dias)', 'today':'hoje' }[range];
+    const totalOrders  = ordSum.by_status.reduce((a,r) => a + Number(r.total), 0);
+    const totalItems   = itmSum.by_status.reduce((a,r) => a + Number(r.total_items), 0);
+    const totalQty     = itmSum.by_status.reduce((a,r) => a + Number(r.total_qty), 0);
+    const totalValue   = itmSum.by_status.reduce((a,r) => a + Number(r.total_value), 0);
+    const uniqueCust   = Number(ordSum.unique_customers_total ?? 0);
+    const fmtVal = v => 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits:0, maximumFractionDigits:0});
     const kpis = [
-      { lbl:`Produzido ${rangeLabel}`, val: k.total_produced.toLocaleString('pt-BR'), sub:`${pct}% da meta`, badge:pct>=90?'ok':pct>=75?'warn':'bad', badgeT:`${pct}%`, kc:'var(--cyan)' },
-      { lbl:'First Pass Yield', val: k.first_pass_yield.toFixed(1)+'%', sub:`Meta: ≥ 95,0%`, badge:k.first_pass_yield>=95?'ok':'warn', badgeT:k.first_pass_yield>=95?'✓ OK':'⚠ Abaixo', kc:k.first_pass_yield>=95?'var(--green)':'var(--yellow)', stddev: k.stddev_fpy },
-      { lbl:'Taxa de defeito', val: k.defect_rate.toFixed(1)+'%', sub:`${k.scrapped} sucateados · ${k.reworked} retrabalho`, badge:k.defect_rate<=2?'ok':'warn', badgeT:k.defect_rate<=2?'Normal':'Monitorar', kc:'var(--orange)' },
-      { lbl:'OEE', val: k.oee.toFixed(1)+'%', sub:'Disp × Perf × Qualidade', badge:k.oee>=85?'ok':'warn', badgeT:'Meta 85%', kc:'var(--purple)', stddev: k.stddev_oee },
-      { lbl:'Downtime', val: k.downtime_minutes+' min', sub:'Paradas não planejadas', badge:k.downtime_minutes<60?'ok':'bad', badgeT:k.downtime_minutes<60?'OK':'Alto', kc:'var(--yellow)' },
+      { lbl:'Total de pedidos', val: totalOrders.toLocaleString('pt-BR'), sub:'purchase orders', kc:'var(--cyan)' },
+      { lbl:'Itens de pedido', val: totalItems.toLocaleString('pt-BR'), sub:'order items', kc:'var(--blue)' },
+      { lbl:'Quantidade total', val: totalQty.toLocaleString('pt-BR'), sub:'unidades', kc:'var(--green)' },
+      { lbl:'Valor total', val: fmtVal(totalValue), sub:'valor dos itens', kc:'var(--yellow)' },
+      { lbl:'Clientes únicos', val: uniqueCust.toLocaleString('pt-BR'), sub:'com pedidos no período', kc:'var(--purple)' },
     ];
     document.getElementById('kpiRow').innerHTML = kpis.map(k => `
       <div class="kpi" style="--kc:${k.kc}">
         <div class="kpi-lbl">${k.lbl}</div>
-        <div class="kpi-val">${k.val}${k.stddev != null ? `<span style="font-size:13px;font-weight:400;color:var(--txt3);margin-left:4px">±${k.stddev.toFixed(1)}%</span>` : ''}</div>
-        <div class="kpi-sub"><span class="badge ${k.badge}">${k.badgeT}</span>&nbsp;${k.sub}</div>
+        <div class="kpi-val">${k.val}</div>
+        <div class="kpi-sub">${k.sub}</div>
       </div>`).join('');
   } catch(e) { console.error('KPIs:', e); }
 }
 
-async function refreshProd() {
+async function refreshOrdersMonth(ordSum) {
   try {
-    const h = await fetchHistorical(sel('prodRangeSel'), sel('prodShiftSel'), sel('prodLineSel'));
-    const labels = h.map(d => d.label);
+    const d = ordSum.by_month;
+    const granularity = ordSum.period_granularity || 'month';
+    const labels = d.map(r => r.month);
     const n = labels.length;
-    mkChart('prodChart', {
+    const titleEl = document.querySelector('#ordersMonthChart')
+      ?.closest('.card')?.querySelector('.card-title');
+    if (titleEl) titleEl.innerHTML =
+      `<div class="ctdot" style="background:var(--cyan)"></div>Pedidos por ${granularity === 'day' ? 'dia' : 'mês'}`;
+    mkChart('ordersMonthChart', {
       data: { labels, datasets: [
-        { type:'bar', label:'Produzido', data: h.map(d=>d.produced), backgroundColor:'rgba(96,165,250,.65)', borderRadius:3, order:2 },
-        { type:'bar', label:'Defeitos', data: h.map(d=>d.defects), backgroundColor:'rgba(248,113,113,.75)', borderRadius:3, order:3 },
-        { type:'line', label:'Meta', data: h.map(d=>d.target), borderColor:'#475569', borderWidth:1.5, borderDash:[6,4], pointRadius:0, fill:false, order:1 },
+        { type:'bar', label:'Pedidos', data: d.map(r=>Number(r.total_orders)), backgroundColor:'rgba(96,165,250,.65)', borderRadius:3, order:2 },
+        { type:'line', label:'Clientes únicos', data: d.map(r=>Number(r.unique_customers)), borderColor:'#34d399', borderWidth:2, pointRadius:n>15?0:3, fill:false, tension:.4, order:1, yAxisID:'y1' },
       ]},
       options:{ responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
         plugins:{ legend:{display:false}, tooltip:tip() },
-        scales:{ x:scX({ticks:{...scX().ticks,maxRotation:rot(n)}}), y:scY({min:0}) }
+        scales:{
+          x: scX({ticks:{...scX().ticks, maxRotation:rot(n)}}),
+          y: scY({min:0}),
+          y1:{ position:'right', grid:{display:false}, ticks:{color:'#34d399', font:{size:10,family:'JetBrains Mono'}} }
+        }
       }
     });
-  } catch(e) { console.error('prodChart:', e); }
+  } catch(e) { console.error('ordersMonthChart:', e); }
 }
 
-async function refreshFpy() {
+async function refreshErrorsByType(errData) {
   try {
-    const h = await fetchHistorical(sel('fpyRangeSel'), sel('fpyShiftSel'), sel('fpyLineSel'));
-    const labels = h.map(d => d.label);
-    const n = labels.length;
-    mkChart('fpyChart', {
-      type:'line',
-      data: { labels, datasets: [
-        { label:'FPY %', data: h.map(d=>d.fpy), borderColor:'#34d399', borderWidth:2.5, pointBackgroundColor:'#34d399', pointRadius:n>15?0:3, fill:true, backgroundColor:'rgba(52,211,153,.07)', tension:.4 },
-        { label:'Meta', data: labels.map(()=>95), borderColor:'#f87171', borderWidth:1.5, borderDash:[5,4], pointRadius:0, fill:false },
-      ]},
-      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:tip() },
-        scales:{ x:scX({ticks:{...scX().ticks,maxRotation:rot(n)}}), y:scY({min:85,max:100,ticks:{...scY().ticks,callback:v=>v+'%'}}) }
+    const d = errData || [];
+    const labels = d.map(r => r.error_type.replace(/_/g, ' '));
+    mkChart('errorsByTypeChart', {
+      type: 'pie',
+      data: { labels, datasets: [{ data: d.map(r => Number(r.total)), backgroundColor: PALETTE, borderWidth: 0, hoverOffset: 8 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: true, position: 'right', labels: { color: tc, font: { size: 10, family: 'JetBrains Mono' }, boxWidth: 10, padding: 8 } },
+          tooltip: { ...tip(), callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed.toLocaleString('pt-BR')}` } }
+        }
       }
     });
-  } catch(e) { console.error('fpyChart:', e); }
+  } catch(e) { console.error('errorsByTypeChart:', e); }
 }
 
-async function refreshLineComp() {
+async function refreshTopCustomers(ordSum) {
   try {
-    const h = await fetchHistorical(sel('lineCompRangeSel'), sel('lineCompShiftSel'));
-    const labels = h.map(d => d.label);
-    const n = labels.length;
-    const ll = (i) => _lines[i] ? `${_lines[i].name} — ${_lines[i].model}` : `Linha ${i+1}`;
-    mkChart('lineCompChart', {
+    const d = ordSum.top_customers.slice(0,10);
+    const labels = d.map(r => r.customer.length > 20 ? r.customer.slice(0,20)+'…' : r.customer);
+    mkChart('topCustomersChart', {
       type:'bar',
-      data: { labels, datasets: [
-        { label: ll(0), data: h.map(d=>d.line1), backgroundColor:'rgba(96,165,250,.75)', borderRadius:2 },
-        { label: ll(1), data: h.map(d=>d.line2), backgroundColor:'rgba(52,211,153,.75)', borderRadius:2 },
-        { label: ll(2), data: h.map(d=>d.line3), backgroundColor:'rgba(251,191,36,.75)', borderRadius:2 },
-        { label: ll(3), data: h.map(d=>d.line4), backgroundColor:'rgba(167,139,250,.75)', borderRadius:2 },
-      ]},
-      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:tip() },
-        scales:{ x:scX({ticks:{...scX().ticks,maxRotation:rot(n)}}), y:scY() }
+      data:{ labels, datasets:[{ data: d.map(r=>Number(r.total_orders)), backgroundColor: PALETTE, borderRadius:3, borderSkipped:false }] },
+      options:{ responsive:true, maintainAspectRatio:false, indexAxis:'y',
+        plugins:{ legend:{display:false}, tooltip:tip() },
+        scales:{ x:scX(), y:{ grid:{display:false}, ticks:{color:tc, font:{size:10,family:'JetBrains Mono'}} } }
       }
     });
-    const colors = ['rgba(96,165,250,.8)','rgba(52,211,153,.8)','rgba(251,191,36,.8)','rgba(167,139,250,.8)'];
-    const leg = document.getElementById('lineCompLegend');
-    if (leg && _lines.length) {
-      leg.innerHTML = _lines.map((l,i) =>
-        `<div class="leg"><div class="leg-sq" style="background:${colors[i]}"></div>${l.name} — ${l.model}</div>`
-      ).join('');
-    }
-  } catch(e) { console.error('lineCompChart:', e); }
+  } catch(e) { console.error('topCustomersChart:', e); }
 }
 
-async function refreshOee() {
+async function refreshErrorRatio(itmSum) {
   try {
-    const h = await fetchHistorical(sel('oeeRangeSel'), sel('oeeShiftSel'), sel('oeeLineSel'));
-    const labels = h.map(d => d.label);
-    const n = labels.length;
-    mkChart('oeeChart', {
-      type:'line',
-      data: { labels, datasets: [
-        { label:'OEE', data: h.map(d=>d.oee), borderColor:'#a78bfa', borderWidth:2.5, pointRadius:n>15?0:2.5, fill:false, tension:.4 },
-        { label:'Disponib.', data: h.map(d=>d.availability), borderColor:'rgba(52,211,153,.6)', borderWidth:1.5, borderDash:[3,3], pointRadius:0, fill:false, tension:.4 },
-        { label:'Perf.', data: h.map(d=>d.performance), borderColor:'rgba(96,165,250,.6)', borderWidth:1.5, borderDash:[3,3], pointRadius:0, fill:false, tension:.4 },
-      ]},
-      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:tip() },
-        scales:{ x:scX({ticks:{...scX().ticks,maxRotation:rot(n)}}), y:scY({min:65,max:100,ticks:{...scY().ticks,callback:v=>v+'%'}}) }
+    const r = itmSum.error_ratio || { with_error: 0, without_error: 0 };
+    const withErr    = Number(r.with_error);
+    const withoutErr = Number(r.without_error);
+    const total      = withErr + withoutErr;
+    const pct        = total > 0 ? ((withErr / total) * 100).toFixed(1) : '0.0';
+    mkChart('errorRatioChart', {
+      type: 'doughnut',
+      data: {
+        labels: [`Com erro (${pct}%)`, 'Sem erro'],
+        datasets: [{ data: [withErr, withoutErr], backgroundColor: ['rgba(248,113,113,.85)', 'rgba(52,211,153,.75)'], borderWidth: 0, hoverOffset: 8 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '60%',
+        plugins: {
+          legend: { display: true, position: 'bottom', labels: { color: tc, font: { size: 10, family: 'JetBrains Mono' }, boxWidth: 10, padding: 10 } },
+          tooltip: { ...tip(), callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed.toLocaleString('pt-BR')}` } }
+        }
       }
     });
-  } catch(e) { console.error('oeeChart:', e); }
+  } catch(e) { console.error('errorRatioChart:', e); }
 }
 
-async function refreshShiftEff() {
+async function refreshItemStatus(itmSum) {
   try {
-    const h = await fetchHistorical(sel('shiftRangeSel'), 'all', sel('shiftLineSel'));
-    const labels = h.map(d => d.label);
-    const n = labels.length;
-    mkChart('shiftChart', {
+    const d = itmSum.by_status;
+    const labels = d.map(r => r.status);
+    mkChart('itemStatusChart', {
       type:'bar',
-      data: { labels, datasets: [
-        { label:'Turno A', data: h.map(d=>d.shift_a_efficiency), backgroundColor:'rgba(96,165,250,.8)', borderRadius:2 },
-        { label:'Turno B', data: h.map(d=>d.shift_b_efficiency), backgroundColor:'rgba(52,211,153,.8)', borderRadius:2 },
-        { label:'Turno C', data: h.map(d=>d.shift_c_efficiency), backgroundColor:'rgba(167,139,250,.8)', borderRadius:2 },
-      ]},
-      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:tip() },
-        scales:{ x:scX({ticks:{...scX().ticks,maxRotation:rot(n)}}), y:scY({min:65,max:100,ticks:{...scY().ticks,callback:v=>v+'%'}}) }
-      }
-    });
-  } catch(e) { console.error('shiftChart:', e); }
-}
-
-async function refreshHour() {
-  try {
-    const shift = sel('hourShiftSel');
-    const range = sel('hourRangeSel');
-    const line  = sel('hourLineSel');
-    const lineParam = line !== 'all' ? `&line=${line}` : '';
-    const hr = await api(`/production/hourly?shift=${shift}&${rangeToDates(range)}${lineParam}`);
-    const labels = hr.map(h => h.hour);
-    if (charts['hourChart']) charts['hourChart'].destroy();
-    charts['hourChart'] = new Chart(document.getElementById('hourChart'), {
-      data: { labels, datasets:[
-        { type:'bar', label:'Produção', data: hr.map(h=>h.avg_produced),
-          backgroundColor:'rgba(96,165,250,.75)', borderRadius:3, order:2,
-          errorBars: hr.map(h=>h.stddev_produced), errorBarColor:'rgba(96,165,250,0.9)' },
-        { type:'line', label:'Meta/hora', data: hr.map(h=>h.avg_target),
-          borderColor:'#475569', borderWidth:1.5, borderDash:[5,4], pointRadius:0, fill:false, order:1 },
-        { type:'bar', label:'Defeitos', data: hr.map(h=>h.avg_defects),
-          backgroundColor:'rgba(248,113,113,.75)', borderRadius:3, yAxisID:'y1', order:3,
-          errorBars: hr.map(h=>h.stddev_defects), errorBarColor:'rgba(248,113,113,0.9)' },
+      data:{ labels, datasets:[
+        { label:'Qtd. itens', data: d.map(r=>Number(r.total_items)), backgroundColor:'rgba(96,165,250,.8)', borderRadius:3, yAxisID:'y' },
+        { label:'Valor (R$)', data: d.map(r=>Number(r.total_value)), backgroundColor:'rgba(251,191,36,.7)', borderRadius:3, yAxisID:'y1' },
       ]},
       options:{ responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
-        plugins:{ legend:{display:false}, tooltip:{
-          ...tip(),
-          callbacks: {
-            label: ctx => {
-              const h = hr[ctx.dataIndex];
-              if (ctx.dataset.label === 'Produção')  return ` Produção: ${Math.round(h.avg_produced)} ±${Math.round(h.stddev_produced)}`;
-              if (ctx.dataset.label === 'Defeitos')  return ` Defeitos: ${h.avg_defects.toFixed(1)} ±${h.stddev_defects.toFixed(1)}`;
-              if (ctx.dataset.label === 'Meta/hora') return ` Meta: ${Math.round(h.avg_target)}`;
-            }
-          }
-        }},
+        plugins:{ legend:{display:false}, tooltip:tip() },
         scales:{
           x: scX(),
           y: scY({min:0}),
-          y1:{ position:'right', grid:{display:false}, ticks:{color:'#f87171',font:{size:10,family:'JetBrains Mono'}} }
-        }
-      },
-      plugins: [errorBarPlugin]
-    });
-  } catch(e) { console.error('hourChart:', e); }
-}
-
-async function refreshDefCat() {
-  try {
-    const range = sel('defCatRangeSel');
-    const shift = sel('defCatShiftSel');
-    const shiftParam = shift !== 'all' ? `&shift=${shift}` : '';
-    const line  = sel('defCatLineSel');
-    const lineParam = line !== 'all' ? `&line=${line}` : '';
-    const dc = await api(`/defects?${rangeToDates(range)}${shiftParam}${lineParam}`);
-    mkChart('defChart', {
-      type:'bar',
-      data:{ labels: dc.map(d=>d.category), datasets:[{
-        data: dc.map(d=>d.count),
-        backgroundColor:['rgba(248,113,113,.8)','rgba(251,163,72,.8)','rgba(167,139,250,.8)','rgba(96,165,250,.8)','rgba(52,211,153,.8)','rgba(251,191,36,.8)','rgba(100,116,139,.7)'],
-        borderRadius:3, borderSkipped:false,
-      }]},
-      options:{ responsive:true, maintainAspectRatio:false, indexAxis:'y',
-        plugins:{ legend:{display:false}, tooltip:tip() },
-        scales:{
-          x:{ ...scX(), ticks:{ ...scX().ticks, callback: v => v.toLocaleString('pt-BR') } },
-          y:{ grid:{display:false}, ticks:{color:tc,font:{size:10,family:'JetBrains Mono'}} }
+          y1:{ position:'right', grid:{display:false}, ticks:{color:'#fbbf24', font:{size:10,family:'JetBrains Mono'}, callback:v=>'R$'+Math.round(v/1000)+'k'} }
         }
       }
     });
-  } catch(e) { console.error('defChart:', e); }
+  } catch(e) { console.error('itemStatusChart:', e); }
 }
 
-async function refreshDefTrend() {
+
+async function refreshDeliveryMonth(ordSum) {
   try {
-    const h = await fetchHistorical(sel('defTrendRangeSel'), sel('defTrendShiftSel'), sel('defTrendLineSel'));
-    const labels = h.map(d => d.label);
+    const d = ordSum.by_delivery_month || [];
+    const labels = d.map(r => r.month);
     const n = labels.length;
-    mkChart('defTrendChart', {
-      type:'line',
-      data: { labels, datasets: [
-        { label:'Tela', data: h.map(d=>d.defect_screen), borderColor:'#f87171', borderWidth:2, pointRadius:n>15?0:2.5, fill:false, tension:.4 },
-        { label:'Câmera', data: h.map(d=>d.defect_camera), borderColor:'#fb923c', borderWidth:2, borderDash:[4,2], pointRadius:n>15?0:2.5, fill:false, tension:.4 },
-        { label:'Bateria', data: h.map(d=>d.defect_battery), borderColor:'#a78bfa', borderWidth:2, borderDash:[2,3], pointRadius:n>15?0:2.5, fill:false, tension:.4 },
-        { label:'Outros', data: h.map(d=>d.defect_other), borderColor:'#34d399', borderWidth:1.5, pointRadius:0, fill:false, tension:.4 },
-      ]},
-      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:tip() },
-        scales:{ x:scX({ticks:{...scX().ticks,maxRotation:rot(n)}}), y:scY({min:0}) }
+    mkChart('deliveryMonthChart', {
+      type: 'bar',
+      data: { labels, datasets: [{ label: 'Pedidos', data: d.map(r => Number(r.total_orders)), backgroundColor: 'rgba(34,211,238,.7)', borderRadius: 3 }] },
+      options: { responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: tip() },
+        scales: { x: scX({ ticks: { ...scX().ticks, maxRotation: rot(n) } }), y: scY({ min: 0 }) }
       }
     });
-  } catch(e) { console.error('defTrendChart:', e); }
+  } catch(e) { console.error('deliveryMonthChart:', e); }
 }
 
-async function refreshLineStatus() {
+
+
+async function refreshAlertResolveStatus(data) {
   try {
-    const lines = await api('/lines/status');
-    const sc = {running:'var(--green)',stopped:'var(--red)',maintenance:'var(--yellow)'};
-    const sl = {running:'running',stopped:'stopped',maintenance:'maintenance'};
-    const st = {running:'Rodando',stopped:'Parada',maintenance:'Manut.'};
-    document.getElementById('lineStatusWrap').innerHTML = lines.map(l => {
-      const p = Math.round(l.produced / l.target * 100);
-      return `<div class="line-item">
-        <div style="display:flex;align-items:flex-start;gap:10px">
-          <div class="line-dot" style="background:${sc[l.status]};margin-top:3px"></div>
-          <div>
-            <div class="line-name">${l.name} <span class="s-pill s-${sl[l.status]}">${st[l.status]}</span></div>
-            <div class="line-model">${l.model}</div>
-            <div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" style="width:${Math.min(p,100)}%;background:${sc[l.status]}"></div></div></div>
-          </div>
-        </div>
-        <div style="text-align:right">
-          <div class="line-prod">${l.produced.toLocaleString('pt-BR')} <span style="font-size:10px;color:var(--txt2);font-weight:400">un</span></div>
-          <div class="line-fpy" style="color:var(--txt2)">FPY ${l.fpy.toFixed(1)}%</div>
-          <div class="line-fpy" style="color:var(--txt3)">${p}% meta</div>
-          <div class="line-fpy" style="color:var(--txt2)">Vel. ${l.speed_pct}%</div>
-          <div class="line-fpy" style="color:var(--txt3);font-size:10px">${l.operator}</div>
-        </div>
-      </div>`;
-    }).join('');
-  } catch(e) { console.error('lineStatus:', e); }
+    const STATUS_COLOR = {
+      'PROCESSED':   'rgba(52,211,153,.85)',
+      'REJECTED':    'rgba(248,113,113,.85)',
+      'INCONSISTENCY': 'rgba(251,191,36,.85)',
+    };
+    const labels = data.map(r => r.status);
+    const colors = labels.map(s => STATUS_COLOR[s] || 'rgba(100,116,139,.7)');
+    mkChart('alertResolveStatusChart', {
+      type: 'doughnut',
+      data: { labels, datasets: [{ data: data.map(r => Number(r.total)), backgroundColor: colors, borderWidth: 0, hoverOffset: 8 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '60%',
+        plugins: {
+          legend: { display: true, position: 'right', labels: { color: tc, font: { size: 10, family: 'JetBrains Mono' }, boxWidth: 10, padding: 10 } },
+          tooltip: { ...tip(), callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed.toLocaleString('pt-BR')}` } }
+        }
+      }
+    });
+  } catch(e) { console.error('alertResolveStatusChart:', e); }
 }
+
+async function refreshTopProducts(itmSum) {
+  try {
+    const d = itmSum.top_products.slice(0,10);
+    const labels = d.map(r => (r.part_number || r.market_name || '').slice(0,22));
+    mkChart('topProductsChart', {
+      type:'bar',
+      data:{ labels, datasets:[{ data: d.map(r=>Number(r.total_qty)), backgroundColor: PALETTE, borderRadius:3, borderSkipped:false }] },
+      options:{ responsive:true, maintainAspectRatio:false, indexAxis:'y',
+        plugins:{ legend:{display:false}, tooltip:{...tip(), callbacks:{label:ctx=>' '+ctx.parsed.x.toLocaleString('pt-BR')+' un'}} },
+        scales:{ x:scX(), y:{ grid:{display:false}, ticks:{color:tc, font:{size:10,family:'JetBrains Mono'}} } }
+      }
+    });
+  } catch(e) { console.error('topProductsChart:', e); }
+}
+
 
 // ── REFRESH ALL ────────────────────────────────────────
 async function refreshAll() {
   const btn = document.getElementById('refreshBtn');
   btn.classList.add('spinning');
+  const dateParam = brazilDateParam();
+  const qs = dateParam ? `?${dateParam}` : '';
   try {
-    await api('/lines/status');
+    const [ordSum, itmSum, errData, alertData] = await Promise.all([
+      api(`/brazil/orders/summary${qs}`),
+      api(`/brazil/order-items/summary${qs}`),
+      api(`/brazil/order-items/errors-by-type${qs}`),
+      api(`/brazil/alert-resolves/by-status${qs}`),
+    ]);
     setApiOnline();
+    await Promise.all([
+      refreshKPIs(ordSum, itmSum),
+      refreshOrdersMonth(ordSum),
+      refreshErrorsByType(errData),
+      refreshTopCustomers(ordSum),
+      refreshErrorRatio(itmSum),
+      refreshItemStatus(itmSum),
+      refreshDeliveryMonth(ordSum),
+      refreshAlertResolveStatus(alertData),
+
+      refreshTopProducts(itmSum),
+      loadCustomWidgets(),
+    ]);
   } catch(e) {
     setApiOffline();
-    btn.classList.remove('spinning');
-    return;
+    console.error('refreshAll:', e);
   }
-  await loadLineSelects();
-  await Promise.all([
-    refreshKPIs(), refreshProd(), refreshFpy(),
-    refreshLineComp(), refreshOee(), refreshShiftEff(),
-    refreshHour(), refreshDefCat(), refreshDefTrend(),
-    refreshLineStatus(), loadCustomWidgets()
-  ]);
   document.getElementById('lastUpdate').textContent =
     'Atualizado às ' + new Date().toLocaleTimeString('pt-BR', { hour12: false });
   btn.classList.remove('spinning');
@@ -1890,17 +1685,8 @@ async function initDashboard() {
   document.getElementById('loadingOverlay').classList.remove('hidden');
   document.getElementById('errorOverlay').classList.add('hidden');
   try {
-    await api('/lines/status');
-    setApiOnline();
     document.getElementById('loadingOverlay').classList.add('hidden');
-    await Promise.all([
-      refreshKPIs(), refreshProd(), refreshFpy(),
-      refreshLineComp(), refreshOee(), refreshShiftEff(),
-      refreshHour(), refreshDefCat(), refreshDefTrend(),
-      refreshLineStatus(), loadCustomWidgets()
-    ]);
-    document.getElementById('lastUpdate').textContent =
-      'Atualizado às ' + new Date().toLocaleTimeString('pt-BR', { hour12: false });
+    await refreshAll();
   } catch(e) {
     document.getElementById('loadingOverlay').classList.add('hidden');
     document.getElementById('errorOverlay').classList.remove('hidden');
@@ -2264,10 +2050,9 @@ function _markLastArtifactSaved() {
 async function getChartSnapshot() {
   const snapshot = { charts: {}, kpis: [], alerts: [], images_b64: [..._pendingImages] };
 
-  // Gráficos Chart.js — exclui qualquer chart dentro da seção de arquitetura
   for (const [id, chart] of Object.entries(charts)) {
     const canvas = document.getElementById(id);
-    if (!canvas || canvas.closest('.arq-section')) continue;
+    if (!canvas) continue;
     const cardTitle = canvas.closest('.card')?.querySelector('.card-title')?.textContent?.trim() ?? id;
     snapshot.charts[id] = {
       title: cardTitle,
@@ -2916,559 +2701,16 @@ document.addEventListener('click', e => {
 initDashboard();
 
 // ── Tab switching ──────────────────────────────────────
-let _arqMermaidReady = false;
 function switchTab(name) {
-  const panels = ['dashboard', 'arquitetura', 'exemplos'];
-  panels.forEach(p => {
-    const panel = document.getElementById('tab-panel-' + p);
-    const btn   = document.getElementById('tab-btn-' + p);
-    if (!panel || !btn) return;
-    const active = p === name;
-    panel.style.display = active ? '' : 'none';
-    btn.classList.toggle('active', active);
-  });
-  if (name === 'arquitetura' && !_arqMermaidReady) {
-    _arqMermaidReady = true;
-    const nodes = document.querySelectorAll('#tab-panel-arquitetura .mermaid');
-    if (typeof mermaid.run === 'function') {
-      mermaid.run({ nodes });
-    } else {
-      mermaid.init(undefined, nodes);
-    }
-  }
+  const panel = document.getElementById('tab-panel-' + name);
+  const btn   = document.getElementById('tab-btn-' + name);
+  if (!panel || !btn) return;
+  document.querySelectorAll('[id^="tab-panel-"]').forEach(el => el.style.display = 'none');
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  panel.style.display = '';
+  btn.classList.add('active');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-</script>
-
-<!-- ══════════════════════════════════════════════════════
-     DIVISÓRIA — ARQUITETURA AGÊNTICA
-     ══════════════════════════════════════════════════════ -->
-<div class="arq-section" id="tab-panel-arquitetura" style="display:none">
-
-    <!-- Divisória visual -->
-    <div style="display:flex;align-items:center;gap:16px;padding:48px 48px 0;">
-        <div style="flex:1;height:1px;background:linear-gradient(to right,transparent,#334155);"></div>
-        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#475569;white-space:nowrap;letter-spacing:.1em;text-transform:uppercase;">Arquitetura Agêntica</span>
-        <div style="flex:1;height:1px;background:linear-gradient(to left,transparent,#334155);"></div>
-    </div>
-
-    <div class="arq-inner">
-
-        <!-- Hero -->
-        <section class="border border-slate-800 rounded-2xl bg-gradient-to-br from-[#0F1423] to-[#131B30] p-6 md:p-10 overflow-hidden shadow-2xl">
-            <div class="flex flex-col lg:flex-row gap-10 items-center">
-                <!-- Texto -->
-                <div class="flex-1 min-w-0">
-                    <span class="text-indigo-400 font-mono text-sm uppercase tracking-widest font-semibold block mb-2">Arquitetura Agêntica · Operação autônoma 24/7</span>
-                    <h1 class="text-3xl md:text-4xl font-extrabold text-white tracking-tight mb-4">Arquitetura Agêntica Industrial</h1>
-                    <p class="text-slate-300 leading-relaxed text-base md:text-lg mb-4">
-                        Nesta arquitetura, o agente atua como uma <strong class="text-white">camada de inteligência sobre os dados operacionais</strong>. A partir de uma instrução em linguagem natural — digitada ou dita pelo usuário — o sistema consulta APIs e banco de dados em tempo real, processa os dados em ambiente Python isolado e entrega a análise na forma de texto, gráficos, planilhas Excel ou relatórios PDF.
-                    </p>
-                    <p class="text-slate-400 leading-relaxed text-sm md:text-base mb-3">
-                        O objetivo é eliminar a dependência de intermediários para consultas analíticas rotineiras: o operador ou gestor formula a pergunta diretamente ao sistema — <span class="text-indigo-300 font-medium">"qual linha teve mais paradas esta semana?"</span> — e recebe uma resposta fundamentada em dados reais, sem dado inventado e sem espera.
-                    </p>
-                    <p class="text-slate-400 leading-relaxed text-sm md:text-base">
-                        Em paralelo, um <strong class="text-white">daemon de agendamento</strong> executa monitores periódicos definidos pelo próprio agente: dispara <strong class="text-white">alertas de threshold</strong> visíveis no dashboard quando uma condição operacional é cruzada, e gera <strong class="text-white">relatórios automáticos por e-mail</strong> nos horários configurados — tudo sem intervenção humana.
-                    </p>
-                    <div class="mt-6 flex flex-wrap gap-3 text-xs font-mono">
-                        <span class="px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300">📊 Gráficos customizados</span>
-                        <span class="px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300">📋 Tabelas e spreadsheets</span>
-                        <span class="px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300">📥 Relatórios PDF</span>
-                        <span class="px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300">⚡ Dados em tempo real</span>
-                        <span class="px-3 py-1.5 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-300">💬 Texto ou voz</span>
-                        <span class="px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/30 text-green-300">🕐 Agendamento autônomo</span>
-                        <span class="px-3 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-300">🔔 Alertas de threshold</span>
-                        <span class="px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-300">📧 Relatórios por e-mail</span>
-                    </div>
-                </div>
-                <!-- Ícone decorativo -->
-                <div class="hidden lg:flex shrink-0 items-center justify-center w-64 h-64 rounded-2xl bg-indigo-500/5 border border-indigo-500/10">
-                    <i class="fa-solid fa-robot text-indigo-400/30" style="font-size:9rem;"></i>
-                </div>
-            </div>
-        </section>
-
-        <!-- Frase -->
-        <section class="bg-indigo-950/20 border border-indigo-500/20 rounded-xl p-6">
-            <h2 class="text-xs font-mono uppercase tracking-wider text-indigo-400 mb-3"><i class="fa-solid fa-compass"></i> A Arquitetura em uma frase</h2>
-            <blockquote class="text-lg md:text-xl font-medium text-slate-200 italic leading-snug">
-                "Um <span class="text-indigo-400 underline decoration-indigo-400/40">orquestrador</span> interpreta o pedido em linguagem natural: responde na hora com gráficos, tabelas ou PDFs via <span class="text-indigo-400 underline decoration-indigo-400/40">streaming SSE</span> — ou <span class="text-green-400 underline decoration-green-400/40">agenda a ação</span> para rodar automaticamente, gerando código Python validado que executa em <span class="text-green-400 underline decoration-green-400/40">sandbox determinístico</span> sem depender do LLM a cada ciclo: alertas, relatórios, comandos em máquinas, notificações — <span class="text-indigo-400 underline decoration-indigo-400/40">operação autônoma 24/7</span>."
-            </blockquote>
-        </section>
-
-        <!-- Grafo -->
-        <section class="border border-slate-800 rounded-xl bg-[#0F1423] p-6">
-            <h3 class="text-lg font-bold text-white mb-1 flex items-center gap-2">
-                <i class="fa-solid fa-diagram-project text-indigo-400"></i> Grafo Multi-Agente (LangGraph)
-            </h3>
-            <p class="text-slate-400 text-sm mb-6">A espinha dorsal é um grafo de estados (StateGraph) isolado em dois níveis de decisão.</p>
-            <div class="bg-[#0B0F19] p-6 rounded-lg overflow-auto border border-slate-900 mermaid-wrap relative cursor-pointer group" id="mermaid-graph-wrap" onclick="_openMermaidModal()" title="Clique para ampliar">
-                <div class="absolute top-2 right-2 flex items-center gap-1 text-xs text-slate-600 group-hover:text-indigo-400 transition-colors pointer-events-none select-none z-10">
-                    <i class="fa-solid fa-expand-arrows-alt"></i><span>ampliar</span>
-                </div>
-                <div class="mermaid">
-graph TD
-    User([Usuário])
-
-    User --> Orch
-
-    subgraph Orch[Orquestrador]
-        OT["⚡ LLM decide qual tool chamar<br/>────────────────────────────<br/>data e hora · calcular período · buscar contexto<br/>delegar análise · exportar PDF · exportar Excel<br/>gerenciar agenda · ver código de tarefa<br/>criar tarefa agendada · editar tarefa agendada"]
-    end
-
-    Orch -->|"resposta em texto<br/>via SSE / chat"| User
-    Orch -->|"delega análise"| ANA
-    ANA -->|"texto · gráficos · PDF · Excel"| Orch
-    Orch -->|"listar / pausar / deletar"| SCH
-    subgraph ANA[Sub-Agente Analista]
-        AT["⚡ LLM decide qual tool chamar<br/>────────────────────────────<br/>ler instruções da skill · buscar dados via API<br/>consultar SQL · analisar dados<br/>exportar PDF · exportar Excel<br/>coleta contexto estruturado para agendamento<br/>(skill · endpoint · colunas · amostra · tipo de saída)"]
-    end
-
-    subgraph SG["SchedulingGraph  ⟨StateGraph determinístico⟩"]
-        SG1["⚡ criar tarefa<br/>(infere nome, frequência e horário via LLM<br/>registra no banco)"] --> SG2["consultar dados<br/>(aciona o Analista · coleta dados reais da API)"]
-        SG2 --> SG_G["⚡ gerar código<br/>(LLM escreve o script da tarefa<br/>com base nos dados reais)"]
-        SG_G --> SG3["testar código<br/>(executa em ambiente isolado)"]
-        SG_E["⚡ editar código<br/>(LLM lê o script atual<br/>e aplica a modificação)"] --> SG3
-        SG3 -->|"erro · até 3 tentativas"| SG4["⚡ corrigir código<br/>(LLM corrige com base no erro real<br/>remove imports bloqueados)"]
-        SG4 --> SG3
-        SG3 -->|"ok"| SG5["salvar código<br/>(versiona e persiste no banco)"]
-        SG5 --> SG6["retornar resultado<br/>(devolve confirmação ao Orquestrador)"]
-    end
-
-    subgraph SCH[Sub-Agente Scheduling]
-        ST["⚡ LLM decide qual tool chamar<br/>────────────────────────────<br/>criar tarefa · editar tarefa<br/>excluir tarefa · pausar / retomar<br/>listar tarefas · definir instruções · ver instruções<br/>histórico de versões do código · restaurar versão"]
-    end
-
-    OT -->|"criar tarefa agendada"| SG1
-    OT -->|"editar tarefa agendada"| SG_E
-    SG2 -->|"coleta dados para o script"| AT
-    AT -->|"endpoint · colunas · amostra de dados"| SG2
-    SG5 -->|"persiste script versionado"| DB[("mfg.db<br/>SQLite · persistência")]
-    SCH -->|lê / escreve| DB
-    SG6 -->|confirmação| OT
-
-    DB -->|"tarefa ativa com execução pendente"| DAEMON
-
-    subgraph DAEMON["Daemon · verifica a cada 60s"]
-        RUNNER["executa tarefas agendadas<br/>em ambiente isolado e seguro"]
-    end
-
-    DAEMON -->|"registra execução e agenda próxima"| DB
-    RUNNER -->|"gráficos · PDFs · Excel<br/>alertas por e-mail<br/>notificações via ctx.notify()<br/>qualquer ctx.api()"| User
-
-    subgraph LEG["Legenda"]
-        L1["⚡ nó chama o LLM<br/>(borda amarela)"] ~~~ L2["nó determinístico<br/>(borda verde)"]
-        L3["⚡ sub-agente ReAct<br/>(fundo lilás · borda amarela)"] ~~~ L4["grafo de fluxo fixo<br/>(fundo verde · sequência predefinida)"]
-    end
-
-    classDef legend fill:#111827,stroke:#4ade80,stroke-width:1.5px,color:#9CA3AF,font-style:italic;
-    classDef legendllm fill:#111827,stroke:#facc15,stroke-width:2px,color:#9CA3AF,font-style:italic;
-    classDef legendagent fill:#312E81,stroke:#facc15,stroke-width:2px,color:#c4b5fd,font-style:italic;
-    classDef legendsg fill:#1e3a1e,stroke:#4ade80,stroke-width:1.5px,color:#bbf7d0,font-style:italic;
-    class L2 legend;
-    class L1 legendllm;
-    class L3 legendagent;
-    class L4 legendsg;
-
-    classDef default fill:#1E293B,stroke:#475569,stroke-width:1px,color:#F8FAFC;
-    classDef agent fill:#312E81,stroke:#6366F1,stroke-width:1px,color:#E0E7FF;
-    classDef agentllm fill:#312E81,stroke:#facc15,stroke-width:2px,color:#E0E7FF;
-    classDef sg fill:#1e3a1e,stroke:#4ade80,stroke-width:1.5px,color:#bbf7d0;
-    classDef sgllm fill:#1e3a1e,stroke:#facc15,stroke-width:2px,color:#bbf7d0;
-    classDef storage fill:#0F2027,stroke:#0EA5E9,stroke-width:1px,color:#7DD3FC;
-    classDef daemon fill:#0c1a2e,stroke:#38BDF8,stroke-width:1.5px,color:#7DD3FC;
-    classDef user fill:#1a2535,stroke:#38BDF8,stroke-width:2px,color:#E0F2FE,font-weight:bold;
-    class Orch,ANA,SCH agent;
-    class OT,AT,ST agentllm;
-    class SG,SG2,SG3,SG5,SG6 sg;
-    class SG1,SG_G,SG_E,SG4 sgllm;
-    class DB storage;
-    class DAEMON daemon;
-    class User user;
-                </div>
-            </div>
-            <p class="text-xs text-slate-500 mt-4 leading-relaxed">
-                O <strong>SchedulingGraph</strong> é um StateGraph determinístico com responsabilidade exclusiva de criar e manter o <code>task_code</code>. Para criação, o nó <strong>consultar_dados</strong> chama o sub-agente analista no modo <code>PARA_AGENDAMENTO</code>, que retorna apenas contexto estruturado (endpoint exato, colunas observadas, amostra de dados) — nunca o código em si. O nó <strong>gerar_codigo</strong> usa esse contexto como base para um LLM gerar o <code>def run(from_date, to_date, ctx)</code> determinístico. Para edições, o nó <strong>editar_codigo</strong> lê o código atual e aplica a modificação mínima solicitada, sem acionar o analista. Em ambos os fluxos, o código passa por <strong>testar_codigo</strong> (sandbox real), com até 3 ciclos de <strong>corrigir_codigo</strong> se houver erro. O sub-agente <strong>analista</strong> continua responsável por análises ad-hoc (PDF, Excel, gráficos); o sub-agente <strong>scheduling</strong> cuida das operações CRUD e versionamento do <code>task_code</code> com rollback. O daemon verifica tarefas a cada 60s e executa via <code>runner.py</code> em sandbox Python restrito (sem <code>import</code> dentro de <code>run()</code>). As ações possíveis vão muito além de relatórios — qualquer coisa acessível via <code>ctx.api()</code>: gráficos, PDFs, alertas por e-mail, notificações externas, etc.
-            </p>
-        </section>
-
-        <!-- SSE + Artefatos -->
-        <section class="arq-grid-2">
-            <div class="border border-slate-800 rounded-xl bg-[#0F1423] p-6 flex flex-col">
-                <h3 class="text-lg font-bold text-white mb-1 flex items-center gap-2">
-                    <i class="fa-solid fa-terminal text-emerald-400"></i> Streaming em Tempo Real (SSE)
-                </h3>
-                <p class="text-slate-400 text-sm mb-4">Cada etapa chega ao frontend via Server-Sent Events, transmitida por um side-channel de fila por sessão.</p>
-                <div class="bg-[#0B0F19] rounded-lg p-4 text-xs space-y-3 border border-slate-900 flex-1">
-                    <div class="text-amber-400 flex items-center gap-2"><i class="fa-solid fa-spinner animate-spin"></i> <span class="italic">Analisando o pedido e verificando os dados disponíveis...</span></div>
-                    <div class="text-indigo-400 flex items-center gap-2"><i class="fa-solid fa-book-open"></i> <span>📖 Lendo instruções da skill</span></div>
-                    <div class="text-indigo-400 flex items-center gap-2"><i class="fa-solid fa-globe"></i> <span>🌐 Buscando dados da API</span></div>
-                    <div class="text-indigo-400 flex items-center gap-2"><i class="fa-solid fa-calculator"></i> <span>🔢 Processando e analisando dados</span></div>
-                    <div class="text-emerald-400 border-t border-slate-800 pt-3 mt-2 flex items-start gap-2">
-                        <i class="fa-solid fa-check-circle mt-0.5 shrink-0"></i>
-                        <span>A Linha 2 registrou <strong>3 paradas não planejadas</strong> nesta semana, impactando o OEE em <strong>−6,4 p.p.</strong> em relação à meta.</span>
-                    </div>
-                    <div style="margin-top:12px;border-top:1px solid #1e293b;padding-top:12px;">
-                        <table style="width:100%;border-collapse:collapse;font-size:11px;font-family:'JetBrains Mono',monospace;">
-                            <thead>
-                                <tr style="background:#0f1520;color:#38bdf8;">
-                                    <th style="padding:6px 10px;text-align:left;border:1px solid #1e293b;">Linha</th>
-                                    <th style="padding:6px 10px;text-align:left;border:1px solid #1e293b;">Paradas</th>
-                                    <th style="padding:6px 10px;text-align:left;border:1px solid #1e293b;">OEE</th>
-                                    <th style="padding:6px 10px;text-align:left;border:1px solid #1e293b;">Meta</th>
-                                    <th style="padding:6px 10px;text-align:left;border:1px solid #1e293b;">Δ OEE</th>
-                                </tr>
-                            </thead>
-                            <tbody style="color:#94a3b8;">
-                                <tr style="background:#0a0e14;">
-                                    <td style="padding:5px 10px;border:1px solid #1e293b;">Linha 1</td>
-                                    <td style="padding:5px 10px;border:1px solid #1e293b;">1</td>
-                                    <td style="padding:5px 10px;border:1px solid #1e293b;">86,2%</td>
-                                    <td style="padding:5px 10px;border:1px solid #1e293b;">88,0%</td>
-                                    <td style="padding:5px 10px;border:1px solid #1e293b;color:#34d399;">−1,8 p.p.</td>
-                                </tr>
-                                <tr style="background:#0f1520;">
-                                    <td style="padding:5px 10px;border:1px solid #1e293b;">Linha 2</td>
-                                    <td style="padding:5px 10px;border:1px solid #1e293b;">3</td>
-                                    <td style="padding:5px 10px;border:1px solid #1e293b;">81,4%</td>
-                                    <td style="padding:5px 10px;border:1px solid #1e293b;">87,8%</td>
-                                    <td style="padding:5px 10px;border:1px solid #1e293b;color:#f87171;">−6,4 p.p.</td>
-                                </tr>
-                                <tr style="background:#0a0e14;">
-                                    <td style="padding:5px 10px;border:1px solid #1e293b;">Linha 3</td>
-                                    <td style="padding:5px 10px;border:1px solid #1e293b;">0</td>
-                                    <td style="padding:5px 10px;border:1px solid #1e293b;">89,7%</td>
-                                    <td style="padding:5px 10px;border:1px solid #1e293b;">88,0%</td>
-                                    <td style="padding:5px 10px;border:1px solid #1e293b;color:#34d399;">+1,7 p.p.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            <div class="border border-slate-800 rounded-xl bg-[#0F1423] p-6 flex flex-col">
-                <h3 class="text-lg font-bold text-white mb-1 flex items-center gap-2">
-                    <i class="fa-solid fa-chart-line text-sky-400"></i> Artefatos Gerados pelo Agente
-                </h3>
-                <p class="text-slate-400 text-sm mb-4">Gráficos Matplotlib são convertidos para PNG, salvos no SQLite com UUID e injetados como token no Markdown da resposta.</p>
-                <div class="bg-[#0B0F19] p-4 rounded-lg border border-slate-900">
-                    <div class="text-xs font-mono text-slate-500 mb-3">Exemplo de saída: <span class="text-sky-400">[chart:8a3f-...]</span> → renderizado como imagem</div>
-                    <div style="position:relative;height:180px;">
-                        <canvas id="mockChart"></canvas>
-                    </div>
-                </div>
-                <div class="flex gap-3 mt-4 text-xs font-mono">
-                    <span class="px-2 py-1 rounded bg-slate-800 text-slate-400">📊 Gráfico</span>
-                    <span class="px-2 py-1 rounded bg-slate-800 text-slate-400">📋 Tabela</span>
-                    <span class="px-2 py-1 rounded bg-slate-800 text-slate-400">📥 PDF</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- Agendamento Autônomo -->
-        <section class="border border-green-500/20 rounded-xl bg-[#0a1a0f] p-6 relative overflow-hidden">
-            <div class="absolute -right-6 -bottom-6 opacity-5 pointer-events-none"><i class="fa-solid fa-calendar-check text-[9rem]"></i></div>
-            <div class="flex items-center gap-3 mb-4">
-                <div class="h-10 w-10 bg-green-500/10 border border-green-500/30 rounded-lg flex items-center justify-center text-green-400 shrink-0"><i class="fa-solid fa-calendar-check"></i></div>
-                <div>
-                    <h3 class="text-lg font-bold text-white">Agendamento Autônomo de Tarefas</h3>
-                    <span class="text-xs font-mono text-slate-400">Operação contínua sem intervenção humana</span>
-                </div>
-            </div>
-            <p class="text-slate-300 text-sm leading-relaxed mb-5">O agente não apenas responde — ele <strong class="text-white">aprende uma tarefa e a executa sozinho</strong> no futuro. O gestor descreve em linguagem natural o que quer que aconteça e quando; o agente escreve, testa e salva o código Python de execução. A partir daí, o daemon roda o código diretamente no horário definido, sem passar pelo LLM.</p>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
-                <div class="bg-[#0B0F19] border border-slate-800 rounded-xl p-4">
-                    <div class="text-green-400 font-semibold text-sm mb-2 flex items-center gap-2"><i class="fa-solid fa-comment-dots"></i> 1. Descreva em chat</div>
-                    <p class="text-xs text-slate-400 leading-relaxed">"Me mande a produção do dia todo dia às 7h" — o agente infere nome, frequência e horário. Sem formulários.</p>
-                </div>
-                <div class="bg-[#0B0F19] border border-slate-800 rounded-xl p-4">
-                    <div class="text-green-400 font-semibold text-sm mb-2 flex items-center gap-2"><i class="fa-solid fa-code"></i> 2. Código gerado e validado</div>
-                    <p class="text-xs text-slate-400 leading-relaxed">O orquestrador executa a análise ao vivo, observa os dados reais e escreve o <code>task_code</code> com endpoints e colunas verificados. Testa antes de salvar.</p>
-                </div>
-                <div class="bg-[#0B0F19] border border-slate-800 rounded-xl p-4">
-                    <div class="text-green-400 font-semibold text-sm mb-2 flex items-center gap-2"><i class="fa-solid fa-gears"></i> 3. Execução determinística</div>
-                    <p class="text-xs text-slate-400 leading-relaxed">O daemon roda o <code>runner.py</code> em sandbox restrito — sem LLM, sem variação. Retry automático com backoff. Histórico de versões com rollback.</p>
-                </div>
-            </div>
-            <div class="border-t border-slate-800 pt-4">
-                <p class="text-xs text-slate-500 mb-3 font-mono uppercase tracking-wider">Ações possíveis nas tarefas agendadas</p>
-                <div class="flex flex-wrap gap-2 text-xs font-mono">
-                    <span class="px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-300">📊 Gráficos e PDFs</span>
-                    <span class="px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-300">📋 Excel / planilhas</span>
-                    <span class="px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-300">📧 Alertas por e-mail</span>
-                    <span class="px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-300">🏭 Comandos em máquinas</span>
-                    <span class="px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-300">🔔 Notificações externas</span>
-                    <span class="px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-300">🔁 Qualquer ctx.api()</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- Skills + Sandbox -->
-        <section class="arq-grid-2">
-            <div class="border border-slate-800 rounded-xl bg-[#0F1423] p-6 relative overflow-hidden">
-                <div class="absolute -right-4 -bottom-4 opacity-5 pointer-events-none"><i class="fa-solid fa-book text-9xl"></i></div>
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="h-10 w-10 bg-indigo-500/10 border border-indigo-500/30 rounded-lg flex items-center justify-center text-indigo-400"><i class="fa-solid fa-bookmark"></i></div>
-                    <div>
-                        <h4 class="font-bold text-white text-base">Skills: Contexto Injetado na Hora Certa</h4>
-                        <span class="text-xs font-mono text-slate-400">Lazy-loading — tokens consumidos só quando necessário</span>
-                    </div>
-                </div>
-                <p class="text-slate-300 text-sm leading-relaxed mb-4">Cada skill é um arquivo <code>.md</code> que documenta um endpoint industrial. O agente <strong class="text-white">não carrega tudo no startup</strong> — isso desperdiçaria tokens em skills que podem nunca ser usadas naquela sessão.</p>
-                <div class="space-y-2 mb-4">
-                    <div class="flex items-start gap-3 bg-[#0B0F19] border border-slate-900 rounded-lg p-3">
-                        <span class="text-amber-400 font-mono text-xs font-bold mt-0.5 shrink-0">STARTUP</span>
-                        <span class="text-xs text-slate-400">Apenas os <strong class="text-slate-300">cabeçalhos (4 linhas)</strong> de cada skill são injetados no system prompt.</span>
-                    </div>
-                    <div class="flex items-start gap-3 bg-[#0B0F19] border border-slate-900 rounded-lg p-3">
-                        <span class="text-emerald-400 font-mono text-xs font-bold mt-0.5 shrink-0">EXECUÇÃO</span>
-                        <span class="text-xs text-slate-400">O agente invoca <code class="text-indigo-300">read_skill('nome.md')</code> e recebe o documento completo <strong class="text-slate-300">só naquele momento</strong>.</span>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2 bg-indigo-500/5 border border-indigo-500/20 rounded-lg p-3">
-                    <i class="fa-solid fa-coins text-indigo-400 text-sm"></i>
-                    <span class="text-xs text-slate-300">Dezenas de endpoints suportados <strong class="text-white">sem inflar o custo por token</strong> de cada requisição.</span>
-                </div>
-            </div>
-            <div class="border border-slate-800 rounded-xl bg-[#0F1423] p-6 relative overflow-hidden">
-                <div class="absolute -right-4 -bottom-4 opacity-5 pointer-events-none"><i class="fa-solid fa-flask text-9xl"></i></div>
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="h-10 w-10 bg-purple-500/10 border border-purple-500/30 rounded-lg flex items-center justify-center text-purple-400"><i class="fa-solid fa-flask"></i></div>
-                    <div>
-                        <h4 class="font-bold text-white text-base">Sandbox Python — Poder Total sobre os Dados</h4>
-                        <span class="text-xs font-mono text-slate-400">Ambiente persistente por sessão, estilo Jupyter</span>
-                    </div>
-                </div>
-                <p class="text-slate-300 text-sm leading-relaxed mb-4">O agente <strong class="text-white">gera e executa código Python em tempo real</strong> sobre os dados da operação. Não é uma consulta fixa — é um analista que raciocina, transforma e entrega o que for necessário.</p>
-                <div class="bg-[#0B0F19] border border-slate-900 rounded-lg p-3 space-y-1 text-xs text-slate-400 font-mono mb-4">
-                    <div class="flex items-center gap-2"><i class="fa-solid fa-check text-purple-400"></i> Cruzar tabelas, calcular KPIs, agrupar por turno, linha ou período</div>
-                    <div class="flex items-center gap-2"><i class="fa-solid fa-check text-purple-400"></i> Gerar gráficos customizados (barras, linhas, dispersão, heatmap...)</div>
-                    <div class="flex items-center gap-2"><i class="fa-solid fa-check text-purple-400"></i> Produzir tabelas e relatórios PDF formatados</div>
-                    <div class="flex items-center gap-2"><i class="fa-solid fa-check text-purple-400"></i> Executar análises estatísticas (tendência, desvio, correlação)</div>
-                    <div class="flex items-center gap-2"><i class="fa-solid fa-check text-purple-400"></i> Qualquer análise expressável em Python/Pandas — sem limitação</div>
-                </div>
-                <div class="flex items-center gap-2 bg-purple-500/5 border border-purple-500/20 rounded-lg p-3">
-                    <i class="fa-solid fa-memory text-purple-400 text-sm"></i>
-                    <span class="text-xs text-slate-300">Variáveis criadas em um passo ficam disponíveis nos passos seguintes — análises incrementais sem recarregar os dados.</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- Escala -->
-        <section class="border border-slate-800 rounded-xl bg-[#0F1423] p-6">
-            <div class="flex items-center gap-2 mb-2">
-                <i class="fa-solid fa-expand text-amber-400"></i>
-                <h3 class="text-lg font-bold text-white">Escala para qualquer volume de dados</h3>
-            </div>
-            <p class="text-slate-400 text-sm mb-6">O gestor pode pedir análise de um turno ou de seis meses — o agente trata da mesma forma, sem degradação de desempenho e sem aumento de custo proporcional ao volume.</p>
-            <div class="arq-grid-3">
-                <div class="bg-[#0B0F19] border border-slate-900 rounded-xl p-4 flex flex-col gap-2">
-                    <div class="flex items-center gap-2 text-amber-400 font-semibold text-sm"><i class="fa-solid fa-database"></i> Dados ficam no backend</div>
-                    <p class="text-xs text-slate-400 leading-relaxed">Os DataFrames nunca trafegam para o LLM. O modelo recebe apenas metadados e raciocina sobre eles sem ver os dados brutos.</p>
-                </div>
-                <div class="bg-[#0B0F19] border border-slate-900 rounded-xl p-4 flex flex-col gap-2">
-                    <div class="flex items-center gap-2 text-emerald-400 font-semibold text-sm"><i class="fa-solid fa-layer-group"></i> Análise em etapas</div>
-                    <p class="text-xs text-slate-400 leading-relaxed">O agente processa os dados em passos incrementais no sandbox Python e só devolve o resultado final ao LLM.</p>
-                </div>
-                <div class="bg-[#0B0F19] border border-slate-900 rounded-xl p-4 flex flex-col gap-2">
-                    <div class="flex items-center gap-2 text-indigo-400 font-semibold text-sm"><i class="fa-solid fa-coins"></i> Custo por token controlado</div>
-                    <p class="text-xs text-slate-400 leading-relaxed">Analisar 6 meses de produção custa os mesmos tokens que analisar 1 dia — o volume fica no banco, o LLM só vê o que importa.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Contexto Visual -->
-        <section class="border border-purple-500/20 rounded-xl bg-[#0f0a1a] p-6 relative overflow-hidden">
-            <div class="absolute -right-6 -bottom-6 opacity-5 pointer-events-none"><i class="fa-solid fa-camera text-[9rem]"></i></div>
-            <div class="flex items-center gap-3 mb-4">
-                <div class="h-10 w-10 bg-purple-500/10 border border-purple-500/30 rounded-lg flex items-center justify-center text-purple-400 shrink-0"><i class="fa-solid fa-camera"></i></div>
-                <div>
-                    <h3 class="text-lg font-bold text-white">Contexto Visual — Snapshot do Dashboard</h3>
-                    <span class="text-xs font-mono text-slate-400">Multimodal · até 3 imagens por mensagem · Gemini 2.5 Flash Vision</span>
-                </div>
-            </div>
-            <p class="text-slate-300 text-sm leading-relaxed mb-5">O agente não depende apenas de dados estruturados — ele também <strong class="text-white">enxerga o que está na tela</strong>. O usuário seleciona qualquer área do dashboard com um clique e arraste; a captura é enviada junto com a mensagem e o modelo analisa o conteúdo visual diretamente, identificando tendências, anomalias e padrões nos gráficos.</p>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
-                <div class="bg-[#0B0F19] border border-slate-800 rounded-xl p-4">
-                    <div class="text-purple-400 font-semibold text-sm mb-2 flex items-center gap-2"><i class="fa-solid fa-camera-retro"></i> 1. Captura nativa</div>
-                    <p class="text-xs text-slate-400 leading-relaxed">Usa a API <code class="text-purple-300">getDisplayMedia</code> do browser — captura o frame real da aba, incluindo fontes, oklch e recursos externos. Zero dependências externas, zero CORS.</p>
-                </div>
-                <div class="bg-[#0B0F19] border border-slate-800 rounded-xl p-4">
-                    <div class="text-purple-400 font-semibold text-sm mb-2 flex items-center gap-2"><i class="fa-solid fa-crop-simple"></i> 2. Seleção livre</div>
-                    <p class="text-xs text-slate-400 leading-relaxed">Overlay com crosshair permite selecionar qualquer retângulo da tela com arrastar e soltar. Até 3 recortes por mensagem — o stream de vídeo é mantido aberto para não pedir permissão repetidamente.</p>
-                </div>
-                <div class="bg-[#0B0F19] border border-slate-800 rounded-xl p-4">
-                    <div class="text-purple-400 font-semibold text-sm mb-2 flex items-center gap-2"><i class="fa-solid fa-eye"></i> 3. Análise multimodal</div>
-                    <p class="text-xs text-slate-400 leading-relaxed">As imagens são enviadas como partes de uma <code class="text-purple-300">HumanMessage</code> multimodal ao Gemini. O agente pode complementar a análise visual com dados numéricos exatos via <code class="text-purple-300">get_dashboard_charts()</code>.</p>
-                </div>
-            </div>
-            <div class="border-t border-slate-800 pt-4 flex flex-wrap gap-3 items-center">
-                <span class="text-xs font-mono text-slate-500 uppercase tracking-wider mr-2">Comportamento do agente:</span>
-                <span class="px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-mono">📷 Interpreta gráficos visualmente</span>
-                <span class="px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-mono">🔢 Busca dados exatos via tool</span>
-                <span class="px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-mono">📖 Explica métricas via RAG</span>
-                <span class="px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-mono">🖼️ Até 3 recortes por mensagem</span>
-            </div>
-        </section>
-
-        <!-- Por que importa -->
-        <section class="border border-slate-800 rounded-xl bg-[#0F1423] p-6">
-            <div class="mb-6">
-                <h3 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-industry text-emerald-400"></i> Por que isso importa para a sua fábrica</h3>
-                <p class="text-sm text-slate-400">Como a engenharia de software aplicada resolve as dores do chão de fábrica.</p>
-            </div>
-            <div class="arq-grid-3">
-                <div class="p-4 rounded-xl bg-[#0B0F19] border border-slate-800 hover:border-indigo-500/50 transition">
-                    <span class="text-rose-400 text-xs font-mono block mb-1"><i class="fa-solid fa-circle-xmark"></i> "O modelo inventa dados"</span>
-                    <h5 class="text-white font-bold text-sm mb-2">Solução Aplicada</h5>
-                    <p class="text-xs text-slate-400 leading-relaxed">Sub-agente só responde baseado no output de <code>analisar_dataframe</code>. Sem dados executados, sem resposta.</p>
-                </div>
-                <div class="p-4 rounded-xl bg-[#0B0F19] border border-slate-800 hover:border-indigo-500/50 transition">
-                    <span class="text-rose-400 text-xs font-mono block mb-1"><i class="fa-solid fa-circle-xmark"></i> "A tela trava esperando resposta"</span>
-                    <h5 class="text-white font-bold text-sm mb-2">Solução Aplicada</h5>
-                    <p class="text-xs text-slate-400 leading-relaxed">Streaming SSE ativo nativamente, atualizando o raciocínio e tool calls em tempo real.</p>
-                </div>
-                <div class="p-4 rounded-xl bg-[#0B0F19] border border-slate-800 hover:border-indigo-500/50 transition">
-                    <span class="text-rose-400 text-xs font-mono block mb-1"><i class="fa-solid fa-circle-xmark"></i> "Análise de grandes períodos falha"</span>
-                    <h5 class="text-white font-bold text-sm mb-2">Solução Aplicada</h5>
-                    <p class="text-xs text-slate-400 leading-relaxed">O namespace em memória armazena as transformações por etapa sem poluir a janela de contexto do LLM.</p>
-                </div>
-                <div class="p-4 rounded-xl bg-[#0B0F19] border border-slate-800 hover:border-indigo-500/50 transition">
-                    <span class="text-rose-400 text-xs font-mono block mb-1"><i class="fa-solid fa-circle-xmark"></i> "O agente esquece o contexto"</span>
-                    <h5 class="text-white font-bold text-sm mb-2">Solução Aplicada</h5>
-                    <p class="text-xs text-slate-400 leading-relaxed">Checkpointer nativo em SQLite salva o estado exato da conversa vinculada ao ID da sessão.</p>
-                </div>
-                <div class="p-4 rounded-xl bg-[#0B0F19] border border-slate-800 hover:border-indigo-500/50 transition">
-                    <span class="text-rose-400 text-xs font-mono block mb-1"><i class="fa-solid fa-circle-xmark"></i> "Adicionar APIs exige retrabalho"</span>
-                    <h5 class="text-white font-bold text-sm mb-2">Solução Aplicada</h5>
-                    <p class="text-xs text-slate-400 leading-relaxed">Extensibilidade plug-and-play através de arquivos Markdown simples em um diretório de skills mapeado.</p>
-                </div>
-                <div class="p-4 rounded-xl bg-[#0B0F19] border border-slate-800 hover:border-indigo-500/50 transition">
-                    <span class="text-rose-400 text-xs font-mono block mb-1"><i class="fa-solid fa-circle-xmark"></i> "Excesso de APIs confunde o LLM"</span>
-                    <h5 class="text-white font-bold text-sm mb-2">Solução Aplicada</h5>
-                    <p class="text-xs text-slate-400 leading-relaxed">Lazy-loading estratégico restringe a injeção do prompt de sistema apenas à skill correlacionada ao escopo.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Painéis Customizados -->
-        <section class="border border-sky-500/20 rounded-xl bg-[#06111a] p-6 relative overflow-hidden">
-            <div class="absolute -right-6 -bottom-6 opacity-5 pointer-events-none"><i class="fa-solid fa-table-columns text-[9rem]"></i></div>
-            <div class="flex items-center gap-3 mb-4">
-                <div class="h-10 w-10 bg-sky-500/10 border border-sky-500/30 rounded-lg flex items-center justify-center text-sky-400 shrink-0"><i class="fa-solid fa-table-columns"></i></div>
-                <div>
-                    <h3 class="text-lg font-bold text-white">Painéis Customizados</h3>
-                    <span class="text-xs font-mono text-slate-400">Dashboards criados dinamicamente pelo agente · persistidos por usuário</span>
-                </div>
-            </div>
-            <p class="text-slate-300 text-sm leading-relaxed mb-5">O agente pode criar painéis de gráficos diretamente no dashboard a partir de uma instrução em chat — sem nenhum formulário ou configuração manual. Cada painel é salvo no banco vinculado ao <code class="text-sky-300">user_id</code> do browser e reaparece automaticamente a cada abertura da página. O usuário pode reordenar por arrastar-e-soltar e remover painéis individualmente.</p>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
-                <div class="bg-[#0B0F19] border border-slate-800 rounded-xl p-4">
-                    <div class="text-sky-400 font-semibold text-sm mb-2 flex items-center gap-2"><i class="fa-solid fa-comment-dots"></i> 1. Pedido em linguagem natural</div>
-                    <p class="text-xs text-slate-400 leading-relaxed">"Crie um gráfico de barras com o OEE por linha dos últimos 7 dias" — o agente executa a análise, monta a config Chart.js e persiste no SQLite via <code class="text-sky-300">POST /dashboard-widgets</code>.</p>
-                </div>
-                <div class="bg-[#0B0F19] border border-slate-800 rounded-xl p-4">
-                    <div class="text-sky-400 font-semibold text-sm mb-2 flex items-center gap-2"><i class="fa-solid fa-database"></i> 2. Config salva no backend</div>
-                    <p class="text-xs text-slate-400 leading-relaxed">O endpoint <code class="text-sky-300">GET /dashboard-widgets/{id}/data</code> devolve o objeto Chart.js completo. O frontend instancia o gráfico diretamente — sem lógica de mapeamento no browser.</p>
-                </div>
-                <div class="bg-[#0B0F19] border border-slate-800 rounded-xl p-4">
-                    <div class="text-sky-400 font-semibold text-sm mb-2 flex items-center gap-2"><i class="fa-solid fa-arrows-up-down-left-right"></i> 3. Layout persistido por usuário</div>
-                    <p class="text-xs text-slate-400 leading-relaxed">A ordem dos painéis é salva no <code class="text-sky-300">localStorage</code> por <code>user_id</code>. Drag-and-drop nativo sem bibliotecas — o DOM é a fonte de verdade da ordem.</p>
-                </div>
-            </div>
-            <div class="border-t border-slate-800 pt-4 flex flex-wrap gap-3 items-center">
-                <span class="text-xs font-mono text-slate-500 uppercase tracking-wider mr-2">Tipos de painel suportados:</span>
-                <span class="px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-300 text-xs font-mono">📊 bar / line / scatter</span>
-                <span class="px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-300 text-xs font-mono">🍩 doughnut / pie</span>
-                <span class="px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-300 text-xs font-mono">🔢 qualquer tipo Chart.js</span>
-                <span class="px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-300 text-xs font-mono">🗑️ remoção individual</span>
-                <span class="px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-300 text-xs font-mono">↔️ reordenação por drag</span>
-            </div>
-        </section>
-
-        <!-- Tarefa Sob Demanda -->
-        <section class="border border-orange-500/20 rounded-xl bg-[#160f06] p-6 relative overflow-hidden">
-            <div class="absolute -right-6 -bottom-6 opacity-5 pointer-events-none"><i class="fa-solid fa-bolt text-[9rem]"></i></div>
-            <div class="flex items-center gap-3 mb-4">
-                <div class="h-10 w-10 bg-orange-500/10 border border-orange-500/30 rounded-lg flex items-center justify-center text-orange-400 shrink-0"><i class="fa-solid fa-bolt"></i></div>
-                <div>
-                    <h3 class="text-lg font-bold text-white">Tarefa Sob Demanda</h3>
-                    <span class="text-xs font-mono text-slate-400">Execução avulsa em background · sem horário fixo · notifica ao concluir</span>
-                </div>
-            </div>
-            <p class="text-slate-300 text-sm leading-relaxed mb-5">Além das tarefas recorrentes, o agente suporta execuções <strong class="text-white">disparadas manualmente a qualquer momento</strong> — sem necessidade de configurar frequência ou horário. O usuário pede a análise no chat com <span class="text-orange-300 font-medium">"execute agora e me avise quando terminar"</span>; o daemon roda em background e empurra um alerta ao dashboard assim que conclui, sem bloquear a interface.</p>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
-                <div class="bg-[#0B0F19] border border-slate-800 rounded-xl p-4">
-                    <div class="text-orange-400 font-semibold text-sm mb-2 flex items-center gap-2"><i class="fa-solid fa-comment-dots"></i> 1. Disparo pelo chat</div>
-                    <p class="text-xs text-slate-400 leading-relaxed">O agente cria uma tarefa com <code class="text-orange-300">frequency="on_demand"</code> e <code>next_run</code> imediato. O daemon a detecta no próximo ciclo (≤ 60s) e inicia a execução.</p>
-                </div>
-                <div class="bg-[#0B0F19] border border-slate-800 rounded-xl p-4">
-                    <div class="text-orange-400 font-semibold text-sm mb-2 flex items-center gap-2"><i class="fa-solid fa-gears"></i> 2. Execução isolada</div>
-                    <p class="text-xs text-slate-400 leading-relaxed">Roda no mesmo <code class="text-orange-300">runner.py</code> sandbox das tarefas agendadas — namespace efêmero, sem interferência nas sessões interativas do chat. O histórico de execução fica registrado em <code>task_runs</code>.</p>
-                </div>
-                <div class="bg-[#0B0F19] border border-slate-800 rounded-xl p-4">
-                    <div class="text-orange-400 font-semibold text-sm mb-2 flex items-center gap-2"><i class="fa-solid fa-bell"></i> 3. Notificação ao concluir</div>
-                    <p class="text-xs text-slate-400 leading-relaxed">Ao finalizar, o daemon empurra um alerta via <code class="text-orange-300">POST /alerts</code>. O badge de alertas no header acende e o artefato gerado aparece no painel Artifacts — tudo sem recarregar a página.</p>
-                </div>
-            </div>
-            <div class="border-t border-slate-800 pt-4 flex flex-wrap gap-3 items-center">
-                <span class="text-xs font-mono text-slate-500 uppercase tracking-wider mr-2">Diferença para tarefas agendadas:</span>
-                <span class="px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-300 text-xs font-mono">⚡ sem cron — executa imediatamente</span>
-                <span class="px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-300 text-xs font-mono">🔁 frequência on_demand</span>
-                <span class="px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-300 text-xs font-mono">🔔 notifica via alertas</span>
-                <span class="px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-300 text-xs font-mono">▶ botão "executar agora" no painel</span>
-            </div>
-        </section>
-
-        <!-- Stack -->
-        <section class="border-t border-slate-800 pt-8 pb-12">
-            <h4 class="text-xs font-mono uppercase tracking-wider text-slate-400 text-center mb-6">Core Infrastructure Stack</h4>
-            <div class="arq-grid-6" style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:12px;">
-                <div class="bg-[#0F1423] p-3 rounded-lg border border-slate-800"><span class="text-indigo-400 block font-bold mb-1">LLM</span> Gemini 2.5 Flash</div>
-                <div class="bg-[#0F1423] p-3 rounded-lg border border-slate-800"><span class="text-indigo-400 block font-bold mb-1">Orquestração</span> LangGraph 1.0+</div>
-                <div class="bg-[#0F1423] p-3 rounded-lg border border-slate-800"><span class="text-indigo-400 block font-bold mb-1">API</span> FastAPI + SSE</div>
-                <div class="bg-[#0F1423] p-3 rounded-lg border border-slate-800"><span class="text-indigo-400 block font-bold mb-1">Análise</span> Pandas/Matplotlib</div>
-                <div class="bg-[#0F1423] p-3 rounded-lg border border-slate-800"><span class="text-indigo-400 block font-bold mb-1">Persistência</span> SQLite Backend</div>
-                <div class="bg-[#0F1423] p-3 rounded-lg border border-slate-800"><span class="text-indigo-400 block font-bold mb-1">Threading</span> ContextVar API</div>
-            </div>
-        </section>
-
-    </div>
-</div>
-
-<script>
-    const mockCtx = document.getElementById('mockChart').getContext('2d');
-    new Chart(mockCtx, {
-        type: 'line',
-        data: {
-            labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
-            datasets: [{
-                label: 'Produção Real (L2)',
-                data: [120, 145, 139, 162, 150, 80, 95],
-                borderColor: '#6366F1',
-                backgroundColor: 'rgba(99,102,241,0.1)',
-                borderWidth: 2,
-                tension: 0.3,
-                fill: true
-            }, {
-                label: 'Meta',
-                data: [140, 140, 140, 140, 140, 100, 100],
-                borderColor: '#F59E0B',
-                borderDash: [5, 5],
-                borderWidth: 1.5,
-                fill: false
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                x: { grid: { display: false }, ticks: { color: '#64748B', font: { size: 9 } } },
-                y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748B', font: { size: 9 } } }
-            }
-        }
-    });
 </script>
 
 <script>
@@ -4236,8 +3478,6 @@ function closeArtifacts() {
 // carrega histórico do chat e badges ao iniciar
 document.addEventListener('DOMContentLoaded', () => {
   loadChatHistory();
-  loadLineSelects();
-
   pollAgenda();
   pollAlerts();
 });
@@ -4381,349 +3621,8 @@ function pollAgenda() {
   setInterval(updateAgendaBadge, 15000);
 }
 
-// ── Demo controls ─────────────────────────────────────────────────────────────
-
-function _applyDemoState(state) {
-  const boost  = document.getElementById('demoBoostBtn');
-  const reduce = document.getElementById('demoReduceBtn');
-
-  if (state === 'boosted') {
-    boost.disabled  = true;
-    boost.textContent = '▲ alto';
-    boost.style.opacity = '.35'; boost.style.cursor = 'not-allowed';
-    boost.title = 'Produção já está alta — clique em ▼ para restaurar o original';
-    reduce.disabled = false;
-    reduce.textContent = '↩ restaurar';
-    reduce.style.opacity = '1'; reduce.style.cursor = 'pointer';
-    reduce.style.borderColor = '#b45309'; reduce.style.color = '#fcd34d';
-    reduce.title = 'Restaura a produção ao valor original';
-  } else if (state === 'reduced') {
-    reduce.disabled  = true;
-    reduce.textContent = '▼ baixo';
-    reduce.style.opacity = '.35'; reduce.style.cursor = 'not-allowed';
-    reduce.title = 'Produção já está baixa — clique em ▲ para restaurar o original';
-    boost.disabled = false;
-    boost.textContent = '↩ restaurar';
-    boost.style.opacity = '1'; boost.style.cursor = 'pointer';
-    boost.style.borderColor = '#b45309'; boost.style.color = '#fcd34d';
-    boost.title = 'Restaura a produção ao valor original';
-  } else {
-    boost.disabled  = false;
-    boost.textContent = '▲ +50%';
-    boost.style.opacity = '1'; boost.style.cursor = 'pointer';
-    boost.style.borderColor = '#16a34a'; boost.style.color = '#4ade80';
-    boost.title = 'Seta produção de hoje para +50% acima do normal';
-    reduce.disabled = false;
-    reduce.textContent = '▼ −50%';
-    reduce.style.opacity = '1'; reduce.style.cursor = 'pointer';
-    reduce.style.borderColor = '#dc2626'; reduce.style.color = '#f87171';
-    reduce.title = 'Seta produção de hoje para −50% abaixo do normal';
-  }
-}
-
-async function _loadDemoState() {
-  try {
-    const res = await fetch('/demo/state');
-    const s = await res.json();
-    _applyDemoState(s.state);
-  } catch (e) {}
-}
-
-async function demoBoost() {
-  const btn = document.getElementById('demoBoostBtn');
-  if (btn.disabled) return;
-  btn.disabled = true; btn.style.opacity = '.35';
-  try {
-    const res = await fetch('/demo/boost', { method: 'POST' });
-    const d = await res.json();
-    if (!res.ok) { alert(d.message); await _loadDemoState(); return; }
-    _applyDemoState(d.state);
-    await refreshAll();
-  } catch (e) { await _loadDemoState(); }
-}
-
-async function demoReduce() {
-  const btn = document.getElementById('demoReduceBtn');
-  if (btn.disabled) return;
-  btn.disabled = true; btn.style.opacity = '.35';
-  try {
-    const res = await fetch('/demo/reduce', { method: 'POST' });
-    const d = await res.json();
-    if (!res.ok) { alert(d.message); await _loadDemoState(); return; }
-    _applyDemoState(d.state);
-    await refreshAll();
-  } catch (e) { await _loadDemoState(); }
-}
-
-document.addEventListener('DOMContentLoaded', _loadDemoState);
 </script>
 
-<!-- ══════════════════════════════════════════════════════
-     PAINEL EXEMPLOS DE COMANDOS
-     ══════════════════════════════════════════════════════ -->
-<div id="tab-panel-exemplos" style="display:none;background:#0a0e14;min-height:100vh;padding:40px 48px 80px;font-family:'Inter',sans-serif;color:#e2e8f0;background-image:linear-gradient(rgba(56,189,248,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(56,189,248,0.03) 1px,transparent 1px);background-size:40px 40px;">
-
-  <!-- Título -->
-  <div style="margin-bottom:40px;">
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px;">
-      <div style="width:3px;height:36px;background:var(--cyan);border-radius:2px;flex-shrink:0;"></div>
-      <div>
-        <div style="font-size:22px;font-weight:700;letter-spacing:.03em;">Exemplos de Comandos</div>
-        <div style="font-size:12px;color:var(--txt2);margin-top:2px;font-family:'JetBrains Mono',monospace;letter-spacing:.08em;">COMO USAR O AGENTE · REFERÊNCIA RÁPIDA</div>
-      </div>
-    </div>
-    <p style="font-size:13px;color:#94a3b8;max-width:680px;line-height:1.7;margin-left:17px;">
-      Digite qualquer um dos comandos abaixo no chat. Clique no botão <span style="background:#1e293b;border:1px solid #334155;border-radius:4px;padding:1px 7px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#38bdf8;">↗ copiar</span> para colar direto no campo de mensagem.
-    </p>
-  </div>
-
-  <style>
-    .ex-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:20px; }
-    .ex-card { background:#0f1520; border:1px solid #1e2d3d; border-radius:10px; overflow:hidden; }
-    .ex-card-head { display:flex; align-items:center; gap:10px; padding:14px 18px 12px; border-bottom:1px solid #1e2d3d; }
-    .ex-card-icon { font-size:16px; width:28px; text-align:center; }
-    .ex-card-title { font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#e2e8f0; }
-    .ex-card-subtitle { font-size:10px; color:#94a3b8; font-family:'JetBrains Mono',monospace; margin-top:1px; }
-    .ex-item { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding:10px 18px; border-bottom:1px solid rgba(30,45,61,.6); transition:background .12s; cursor:default; }
-    .ex-item:last-child { border-bottom:none; }
-    .ex-item:hover { background:rgba(56,189,248,0.04); }
-    .ex-text { font-size:12px; color:#cbd5e1; line-height:1.5; flex:1; }
-    .ex-text em { color:#94a3b8; font-style:normal; font-size:11px; display:block; margin-top:2px; font-family:'JetBrains Mono',monospace; }
-    .ex-copy { flex-shrink:0; background:none; border:1px solid #1e2d3d; border-radius:4px; color:#475569; font-size:10px; font-family:'JetBrains Mono',monospace; padding:3px 8px; cursor:pointer; transition:all .15s; white-space:nowrap; }
-    .ex-copy:hover { border-color:var(--cyan); color:var(--cyan); background:rgba(56,189,248,.06); }
-    .ex-tag { display:inline-block; font-size:9px; font-family:'JetBrains Mono',monospace; letter-spacing:.06em; padding:2px 6px; border-radius:3px; margin-right:4px; margin-bottom:2px; }
-    .tag-cyan  { background:rgba(56,189,248,.1);  color:#38bdf8; border:1px solid rgba(56,189,248,.2); }
-    .tag-green { background:rgba(52,211,153,.1);  color:#34d399; border:1px solid rgba(52,211,153,.2); }
-    .tag-orange{ background:rgba(251,146,60,.1);  color:#fb923c; border:1px solid rgba(251,146,60,.2); }
-    .tag-purple{ background:rgba(167,139,250,.1); color:#a78bfa; border:1px solid rgba(167,139,250,.2); }
-    .tag-red   { background:rgba(248,113,113,.1); color:#f87171; border:1px solid rgba(248,113,113,.2); }
-    .tag-blue  { background:rgba(96,165,250,.1);  color:#60a5fa; border:1px solid rgba(96,165,250,.2); }
-  </style>
-
-  <div class="ex-grid">
-
-    <!-- ── ANÁLISE DE DADOS ── -->
-    <div class="ex-card">
-      <div class="ex-card-head">
-        <div class="ex-card-icon">📊</div>
-        <div>
-          <div class="ex-card-title">Análise de Dados</div>
-          <div class="ex-card-subtitle">Gráficos, tabelas e análises gerados em tempo real no chat</div>
-        </div>
-      </div>
-      <div class="ex-item"><span class="ex-text">Qual foi a produção de hoje por linha?</span><button class="ex-copy" onclick="_exCopy(this,'Qual foi a produção de hoje por linha?')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Mostre um gráfico de produção dos últimos 7 dias agregado por dia</span><button class="ex-copy" onclick="_exCopy(this,'Mostre um gráfico de produção dos últimos 7 dias agregado por dia')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Como está o OEE agora? Compare entre as linhas</span><button class="ex-copy" onclick="_exCopy(this,'Como está o OEE agora? Compare entre as linhas')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Compare o FPY entre os turnos A, B e C nessa semana</span><button class="ex-copy" onclick="_exCopy(this,'Compare o FPY entre os turnos A, B e C nessa semana')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Mostre os defeitos por categoria dos últimos 30 dias em gráfico de barras</span><button class="ex-copy" onclick="_exCopy(this,'Mostre os defeitos por categoria dos últimos 30 dias em gráfico de barras')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Qual linha está com pior desempenho hoje?</span><button class="ex-copy" onclick="_exCopy(this,'Qual linha está com pior desempenho hoje?')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Gere uma tabela com produção, defeitos e FPY por turno esta semana</span><button class="ex-copy" onclick="_exCopy(this,'Gere uma tabela com produção, defeitos e FPY por turno esta semana')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Mostre a tendência de defeitos dos últimos 14 dias em gráfico de linha</span><button class="ex-copy" onclick="_exCopy(this,'Mostre a tendência de defeitos dos últimos 14 dias em gráfico de linha')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Qual foi o melhor e pior dia de produção no mês atual?</span><button class="ex-copy" onclick="_exCopy(this,'Qual foi o melhor e pior dia de produção no mês atual?')">↗ copiar</button></div>
-      <div style="padding:10px 18px;background:rgba(56,189,248,0.04);border-top:1px solid #1e2d3d;display:flex;flex-direction:column;gap:6px;">
-        <div style="display:flex;gap:7px;align-items:flex-start;font-size:11px;color:#64748b;"><span style="flex-shrink:0;">📅</span><span><strong style="color:#475569;">Períodos naturais</strong> — use "hoje", "esta semana", "mês atual", "últimos 7 dias", "mês anterior". O agente converte automaticamente.</span></div>
-        <div style="display:flex;gap:7px;align-items:flex-start;font-size:11px;color:#64748b;"><span style="flex-shrink:0;">🔄</span><span><strong style="color:#475569;">Iteração</strong> — após um gráfico aparecer no chat, peça variações: "mude para barras", "adicione a linha de média", "paleta mais escura".</span></div>
-        <div style="display:flex;gap:7px;align-items:flex-start;font-size:11px;color:#64748b;"><span style="flex-shrink:0;">🎙️</span><span><strong style="color:#475569;">Voz</strong> — clique no microfone no chat para ditar qualquer comando por áudio.</span></div>
-      </div>
-    </div>
-
-    <!-- ── RELATÓRIOS PDF / EXCEL ── -->
-    <div class="ex-card">
-      <div class="ex-card-head">
-        <div class="ex-card-icon">📄</div>
-        <div>
-          <div class="ex-card-title">Relatórios PDF &amp; Excel</div>
-          <div class="ex-card-subtitle">Gerados sob demanda ou agendados · salvos nos artefatos · pode enviar por e-mail</div>
-        </div>
-      </div>
-      <div class="ex-item"><span class="ex-text">Gere um relatório PDF de produção da semana atual</span><button class="ex-copy" onclick="_exCopy(this,'Gere um relatório PDF de produção da semana atual')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Crie uma planilha Excel com os dados de defeitos dos últimos 30 dias</span><button class="ex-copy" onclick="_exCopy(this,'Crie uma planilha Excel com os dados de defeitos dos últimos 30 dias')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Gere um relatório PDF de OEE por linha do mês atual com gráficos</span><button class="ex-copy" onclick="_exCopy(this,'Gere um relatório PDF de OEE por linha do mês atual com gráficos')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Crie um Excel com produção, FPY e OEE por turno da última semana</span><button class="ex-copy" onclick="_exCopy(this,'Crie um Excel com produção, FPY e OEE por turno da última semana')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Gere um relatório PDF comparando o desempenho das linhas nos últimos 7 dias</span><button class="ex-copy" onclick="_exCopy(this,'Gere um relatório PDF comparando o desempenho das linhas nos últimos 7 dias')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Crie uma planilha com todas as ordens de produção do mês com status e eficiência</span><button class="ex-copy" onclick="_exCopy(this,'Crie uma planilha com todas as ordens de produção do mês com status e eficiência')">↗ copiar</button></div>
-    </div>
-
-    <!-- ── AGENDAMENTO DE RELATÓRIOS ── -->
-    <div class="ex-card">
-      <div class="ex-card-head">
-        <div class="ex-card-icon">🗓️</div>
-        <div>
-          <div class="ex-card-title">Agendamento de Tarefas</div>
-          <div class="ex-card-subtitle">Execução autônoma mesmo com a plataforma fechada · resultados nos artefatos · pode enviar e-mail</div>
-        </div>
-      </div>
-      <div class="ex-item"><span class="ex-text">Agende um relatório em pdf de produção dos últimos 7 dias a cada 6 horas<em>PDF gerado automaticamente a cada 6h e salvo nos artefatos</em></span><button class="ex-copy" onclick="_exCopy(this,'Agende um relatório em pdf de produção dos últimos 7 dias a cada 6 horas')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Agenda um relatório diário de produção todo dia às 7h<em>PDF gerado automaticamente e salvo nos artefatos </em></span><button class="ex-copy" onclick="_exCopy(this,'Agenda um relatório diário de produção todo dia às 7h')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Agende um relatório semanal de FPY e defeitos toda segunda às 8h<em>Planilha ou PDF salvo nos artefatos toda semana sem intervenção</em></span><button class="ex-copy" onclick="_exCopy(this,'Agende um relatório semanal de FPY e defeitos toda segunda às 8h')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Crie uma tarefa que roda todo dia 1º do mês com resumo do mês anterior</span><button class="ex-copy" onclick="_exCopy(this,'Crie uma tarefa que roda todo dia 1º do mês com resumo do mês anterior')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Agende um relatório de OEE a cada 6 horas</span><button class="ex-copy" onclick="_exCopy(this,'Agende um relatório de OEE a cada 6 horas')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Liste todas as tarefas agendadas</span><button class="ex-copy" onclick="_exCopy(this,'Liste todas as tarefas agendadas')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Pause a tarefa 3</span><button class="ex-copy" onclick="_exCopy(this,'Pause a tarefa 3')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Delete a tarefa 5</span><button class="ex-copy" onclick="_exCopy(this,'Delete a tarefa 5')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Editar tarefa 2<em>Edita código, período, métricas ou visual de qualquer tarefa existente</em></span><button class="ex-copy" onclick="_exCopy(this,'Editar tarefa 2')">↗ copiar</button></div>
-    </div>
-
-    <!-- ── MONITORES E ALERTAS ── -->
-    <div class="ex-card">
-      <div class="ex-card-head">
-        <div class="ex-card-icon">🔔</div>
-        <div>
-          <div class="ex-card-title">Monitores &amp; Alertas</div>
-          <div class="ex-card-subtitle">Criados como tarefas agendadas · verificação a cada 5 min · notificação no painel de alertas · pode enviar e-mail</div>
-        </div>
-      </div>
-      <div class="ex-item"><span class="ex-text">Me avise se a produção de hoje aumentar acima de 2000<em>Verifica a cada 5 min e notifica quando o threshold for cruzado</em></span><button class="ex-copy" onclick="_exCopy(this,'Me avise se a produção de hoje aumentar acima de 2000')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Crie um monitor que alerte se a produção passar 2000 unidades no dia</span><button class="ex-copy" onclick="_exCopy(this,'Crie um monitor que alerte se a produção passar 2000 unidades no dia')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Me notifique quando a Linha 1 ficar inoperante</span><button class="ex-copy" onclick="_exCopy(this,'Me notifique quando a Linha 1 ficar inoperante')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Alerta se o FPY cair abaixo de 90% em qualquer linha</span><button class="ex-copy" onclick="_exCopy(this,'Alerta se o FPY cair abaixo de 90% em qualquer linha')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Me avise se houver mais de 50 defeitos na categoria "Dimensional" hoje</span><button class="ex-copy" onclick="_exCopy(this,'Me avise se houver mais de 50 defeitos na categoria Dimensional hoje')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Monitore a eficiência do turno B e me notifique se cair abaixo de 80%</span><button class="ex-copy" onclick="_exCopy(this,'Monitore a eficiência do turno B e me notifique se cair abaixo de 80%')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Me avise se o turno C produzir menos que o turno A no mesmo dia</span><button class="ex-copy" onclick="_exCopy(this,'Me avise se o turno C produzir menos que o turno A no mesmo dia')">↗ copiar</button></div>
-      <div style="padding:10px 18px;background:rgba(248,113,113,0.04);border-top:1px solid #1e2d3d;display:flex;gap:7px;align-items:flex-start;font-size:11px;color:#64748b;">
-        <span style="flex-shrink:0;">🔔</span><span><strong style="color:#475569;">Monitores são tarefas</strong> — o agente cria um monitor como uma tarefa agendada comum. Para editar o threshold, pausar ou deletar, use os mesmos comandos de tarefas: "editar tarefa [ID]", "pause a tarefa [ID]". Para receber também por e-mail, peça ao criar o monitor.</span>
-      </div>
-    </div>
-
-    <!-- ── PAINÉIS CUSTOMIZADOS ── -->
-    <div class="ex-card">
-      <div class="ex-card-head">
-        <div class="ex-card-icon">📌</div>
-        <div>
-          <div class="ex-card-title">Painéis Customizados no Dashboard</div>
-          <div class="ex-card-subtitle">Gráficos permanentes salvos por usuário · editáveis e reordenáveis a qualquer momento</div>
-        </div>
-      </div>
-      <div class="ex-item"><span class="ex-text">Adiciona ao dashboard um gráfico de barras com produção diária dos últimos 7 dias<em>Painel permanente, reaparece a cada abertura da página</em></span><button class="ex-copy" onclick="_exCopy(this,'Adiciona ao dashboard um gráfico de barras com produção diária dos últimos 7 dias')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Insere no dashboard um gráfico de pizza com defeitos por categoria do mês</span><button class="ex-copy" onclick="_exCopy(this,'Insere no dashboard um gráfico de pizza com defeitos por categoria do mês')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Cria um painel com gráfico de linha mostrando OEE dos últimos 14 dias por linha</span><button class="ex-copy" onclick="_exCopy(this,'Cria um painel com gráfico de linha mostrando OEE dos últimos 14 dias por linha')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Coloca no dashboard um gráfico de rosca com distribuição de turnos por produção</span><button class="ex-copy" onclick="_exCopy(this,'Coloca no dashboard um gráfico de rosca com distribuição de turnos por produção')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Liste os painéis no dashboard</span><button class="ex-copy" onclick="_exCopy(this,'Liste os painéis no dashboard')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Altere o gráfico de pizza para ter cores mais sóbrias<em>Edita in-place sem deletar — use o nome ou ID do painel</em></span><button class="ex-copy" onclick="_exCopy(this,'Altere o gráfico de pizza para ter cores mais sóbrias')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Remove o painel de produção diária</span><button class="ex-copy" onclick="_exCopy(this,'Remove o painel de produção diária')">↗ copiar</button></div>
-      <div style="padding:10px 18px;background:rgba(167,139,250,0.04);border-top:1px solid #1e2d3d;display:flex;gap:7px;align-items:flex-start;font-size:11px;color:#64748b;">
-        <span style="flex-shrink:0;">📌</span><span><strong style="color:#475569;">Fixar do chat</strong> — qualquer gráfico gerado no chat pode virar painel permanente: basta dizer "adiciona esse ao dashboard".</span>
-      </div>
-    </div>
-
-    <!-- ── ANÁLISE VISUAL DO DASHBOARD ── -->
-    <div class="ex-card">
-      <div class="ex-card-head">
-        <div class="ex-card-icon">👁️</div>
-        <div>
-          <div class="ex-card-title">Análise Visual</div>
-          <div class="ex-card-subtitle">Analisa o que está na tela · aceita imagens e recortes do dashboard como contexto</div>
-        </div>
-      </div>
-      <div class="ex-item"><span class="ex-text">O que está no dashboard agora? Resuma os principais números<em>Usa get_dashboard_charts — não precisa de imagem</em></span><button class="ex-copy" onclick="_exCopy(this,'O que está no dashboard agora? Resuma os principais números')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Quantos alertas estão ativos no momento?</span><button class="ex-copy" onclick="_exCopy(this,'Quantos alertas estão ativos no momento?')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">O que mostra o gráfico de OEE atual? Há alguma anomalia?</span><button class="ex-copy" onclick="_exCopy(this,'O que mostra o gráfico de OEE atual? Há alguma anomalia?')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Analise este gráfico <span class="ex-tag tag-purple">+ recorte de tela</span><em>Clique no botão 📷 no chat, arraste para selecionar a área e confirme</em></span><button class="ex-copy" onclick="_exCopy(this,'Analise este gráfico para mim')">↗ copiar</button></div>
-
-      <div style="padding:10px 18px;background:rgba(56,189,248,0.04);border-top:1px solid #1e2d3d;display:flex;gap:7px;align-items:flex-start;font-size:11px;color:#64748b;">
-        <span style="flex-shrink:0;">📷</span><span><strong style="color:#475569;">Recorte de tela</strong> — clique no botão 📷 no campo do chat, arraste para selecionar a área desejada e confirme. A imagem é anexada automaticamente à próxima mensagem.</span>
-      </div>
-    </div>
-
-    <!-- ── CONCEITOS E DOMÍNIO ── -->
-    <div class="ex-card">
-      <div class="ex-card-head">
-        <div class="ex-card-icon">📚</div>
-        <div>
-          <div class="ex-card-title">Perguntas Conceituais</div>
-          <div class="ex-card-subtitle">Explica KPIs, linhas, turnos, capacidades do agente e como os dados são estruturados</div>
-        </div>
-      </div>
-      <div class="ex-item"><span class="ex-text">O que é FPY e como é calculado?</span><button class="ex-copy" onclick="_exCopy(this,'O que é FPY e como é calculado?')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Como é calculado o OEE neste sistema?</span><button class="ex-copy" onclick="_exCopy(this,'Como é calculado o OEE neste sistema?')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Quais linhas e turnos existem na fábrica?</span><button class="ex-copy" onclick="_exCopy(this,'Quais linhas e turnos existem na fábrica?')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">O que você consegue fazer? Liste suas capacidades</span><button class="ex-copy" onclick="_exCopy(this,'O que você consegue fazer? Liste suas capacidades')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Como funciona o agendamento de tarefas?</span><button class="ex-copy" onclick="_exCopy(this,'Como funciona o agendamento de tarefas?')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Quais endpoints de dados você usa? Explique o schema</span><button class="ex-copy" onclick="_exCopy(this,'Quais endpoints de dados você usa? Explique o schema')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Como funciona a arquitetura multi-agente deste sistema?</span><button class="ex-copy" onclick="_exCopy(this,'Como funciona a arquitetura multi-agente deste sistema?')">↗ copiar</button></div>
-    </div>
-
-    <!-- ── TAREFAS AVANÇADAS ── -->
-    <div class="ex-card">
-      <div class="ex-card-head">
-        <div class="ex-card-icon">⚡</div>
-        <div>
-          <div class="ex-card-title">Análises Avançadas</div>
-          <div class="ex-card-subtitle">Código Python executado em sandbox · correlação, Pareto, teste t, ANOVA e qualquer cálculo personalizado</div>
-        </div>
-      </div>
-      <div class="ex-item"><span class="ex-text">Calcule a correlação entre defeitos e OEE nos últimos 30 dias</span><button class="ex-copy" onclick="_exCopy(this,'Calcule a correlação entre defeitos e OEE nos últimos 30 dias')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Faça um teste t para comparar a produção do turno A vs turno B neste mês<em>Verifica se a diferença entre os turnos é estatisticamente significativa</em></span><button class="ex-copy" onclick="_exCopy(this,'Faça um teste t para comparar a produção do turno A vs turno B neste mês')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Rode uma ANOVA para comparar o FPY entre todas as linhas nos últimos 30 dias<em>Identifica se há diferença significativa de desempenho entre as linhas</em></span><button class="ex-copy" onclick="_exCopy(this,'Rode uma ANOVA para comparar o FPY entre todas as linhas nos últimos 30 dias')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Faça uma análise de Pareto dos defeitos por categoria dos últimos 90 dias</span><button class="ex-copy" onclick="_exCopy(this,'Faça uma análise de Pareto dos defeitos por categoria dos últimos 90 dias')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Compare o desempenho do mês atual vs mês anterior em todas as métricas</span><button class="ex-copy" onclick="_exCopy(this,'Compare o desempenho do mês atual vs mês anterior em todas as métricas')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Qual turno tem a maior variabilidade de produção nos últimos 30 dias?</span><button class="ex-copy" onclick="_exCopy(this,'Qual turno tem a maior variabilidade de produção nos últimos 30 dias?')">↗ copiar</button></div>
-      <div class="ex-item"><span class="ex-text">Gere um heatmap de produção por dia da semana e turno do último mês</span><button class="ex-copy" onclick="_exCopy(this,'Gere um heatmap de produção por dia da semana e turno do último mês')">↗ copiar</button></div>
-    </div>
-
-  </div>
-
-</div>
-
-<script>
-function _exCopy(btn, text) {
-  const input = document.getElementById('chatInput');
-  if (input) {
-    input.value = text;
-    input.focus();
-    switchTab('dashboard');
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-  } else {
-    navigator.clipboard.writeText(text).catch(() => {});
-  }
-  btn.textContent = '✓ copiado';
-  btn.style.color = '#34d399';
-  btn.style.borderColor = '#34d399';
-  setTimeout(() => { btn.textContent = '↗ copiar'; btn.style.color = ''; btn.style.borderColor = ''; }, 1800);
-}
-
-function _openMermaidModal() {
-  const modal = document.getElementById('mermaid-modal');
-  const content = document.getElementById('mermaid-modal-content');
-  const srcSvg = document.querySelector('#mermaid-graph-wrap .mermaid svg');
-  if (srcSvg) {
-    const clone = srcSvg.cloneNode(true);
-    clone.removeAttribute('width');
-    clone.removeAttribute('height');
-    clone.style.cssText = 'width:100%;height:auto;max-width:none;display:block;';
-    content.innerHTML = '';
-    content.appendChild(clone);
-  }
-  modal.style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-}
-
-function _closeMermaidModal() {
-  document.getElementById('mermaid-modal').style.display = 'none';
-  document.body.style.overflow = '';
-}
-
-function _closeMermaidModalBackdrop(e) {
-  if (e.target === document.getElementById('mermaid-modal')) _closeMermaidModal();
-}
-
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape' && document.getElementById('mermaid-modal').style.display !== 'none') {
-    _closeMermaidModal();
-  }
-});
-</script>
-
-<!-- Modal: Grafo ampliado -->
-<div id="mermaid-modal" style="display:none" class="fixed inset-0 z-[9990] flex items-center justify-center bg-black/85 backdrop-blur-sm" onclick="_closeMermaidModalBackdrop(event)">
-  <div class="relative bg-[#0B0F19] rounded-xl border border-slate-700 shadow-2xl flex flex-col" style="width:95vw;height:92vh;max-width:1800px;">
-    <div class="flex items-center justify-between px-5 py-3 border-b border-slate-800 flex-shrink-0">
-      <span class="text-sm font-mono text-slate-400 flex items-center gap-2"><i class="fa-solid fa-diagram-project text-indigo-400"></i> Grafo Multi-Agente (LangGraph)</span>
-      <button onclick="_closeMermaidModal()" class="text-slate-500 hover:text-white transition-colors text-lg px-2" title="Fechar (Esc)"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    <div id="mermaid-modal-content" class="flex-1 overflow-auto flex items-start justify-center p-6"></div>
-  </div>
-</div>
 
 </body>
 </html>
