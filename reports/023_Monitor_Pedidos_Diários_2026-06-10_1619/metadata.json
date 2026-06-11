@@ -1,0 +1,14 @@
+{
+  "task_id": "023",
+  "task_name": "Monitor Pedidos Diários",
+  "run_at": "2026-06-10T16:19:01.961057",
+  "status": "pending_send",
+  "pdf_urls": [],
+  "email": null,
+  "schedule": {
+    "frequency": "daily",
+    "weekday": null,
+    "day": null,
+    "time": null
+  }
+}

@@ -15,40 +15,40 @@
 <script>
     mermaid.initialize({
         startOnLoad: false,
-        theme: 'dark',
+        theme: 'base',
         securityLevel: 'loose',
         flowchart: { nodeSpacing: 30, rankSpacing: 50, curve: 'basis' },
         themeVariables: {
             fontSize: '13px',
             fontFamily: 'Inter, sans-serif',
-            background: '#0B0F19',
-            mainBkg: '#1E293B',
+            background: '#f8fafc',
+            mainBkg: '#ffffff',
             nodeBorder: '#475569',
-            clusterBkg: '#0f1520',
-            clusterBorder: '#1e293b',
-            titleColor: '#F8FAFC',
-            edgeLabelBackground: '#0B0F19',
+            clusterBkg: '#ffffff',
+            clusterBorder: '#e2e8f0',
+            titleColor: '#1e293b',
+            edgeLabelBackground: '#f8fafc',
             lineColor: '#475569'
         }
     });
 </script>
 <style>
   :root {
-    --bg: #0a0e14;
-    --panel: #0f1520;
-    --surface: #141c27;
-    --border: #1e2d3d;
-    --cyan: #38bdf8;
+    --bg: #f1f5f9;
+    --panel: #ffffff;
+    --surface: #f8fafc;
+    --border: #e2e8f0;
+    --cyan: #f97316;
     --green: #34d399;
     --orange: #fb923c;
     --red: #f87171;
     --yellow: #fbbf24;
     --purple: #a78bfa;
     --blue: #60a5fa;
-    --txt: #e2e8f0;
+    --txt: #1e293b;
     --txt2: #64748b;
-    --txt3: #334155;
-    --grid: rgba(56,189,248,0.04);
+    --txt3: #94a3b8;
+    --grid: rgba(249,115,22,0.04);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -63,7 +63,7 @@
     display:flex; align-items:center; justify-content:space-between;
     flex-wrap:wrap;
     padding:8px 28px; min-height:58px; gap:6px 16px;
-    background:rgba(15,21,32,0.97); border-bottom:1px solid var(--border);
+    background:rgba(255,255,255,0.97); border-bottom:1px solid var(--border);
     position:sticky; top:0; z-index:100;
   }
 
@@ -71,9 +71,7 @@
   :root { --chat-w: 360px; --hdr-h: 58px; }
   #appWrap { display:block; }
   .logo { display:flex; align-items:center; gap:10px; flex-shrink:0; }
-  .logo-hex { width:32px; height:32px; background:var(--cyan); clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%); }
-  .logo-name { font-size:16px; font-weight:700; letter-spacing:.06em; }
-  .logo-sub { font-size:9px; letter-spacing:.2em; color:var(--cyan); font-family:'JetBrains Mono',monospace; }
+  .logo-img { height:32px; width:auto; border-radius:4px; }
   .hdr-r { display:flex; align-items:center; flex-wrap:wrap; gap:6px 12px; margin-left:auto; }
   .live { display:flex; align-items:center; gap:6px; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--green); letter-spacing:.1em; }
   .dot { width:7px; height:7px; border-radius:50%; background:var(--green); animation:pulse 1.6s ease-in-out infinite; }
@@ -91,7 +89,7 @@
 
   /* LOADING / ERROR */
   .loading-overlay {
-    position:fixed; inset:0; background:rgba(10,14,20,.9);
+    position:fixed; inset:0; background:rgba(241,245,249,.9);
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     z-index:999; gap:16px;
   }
@@ -104,7 +102,7 @@
   .error-box p { color:var(--txt2); font-size:12px; line-height:1.7; margin-bottom:16px; }
   .error-box code { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--cyan); background:var(--surface); padding:2px 6px; border-radius:2px; }
   .btn-retry { background:transparent; border:1px solid var(--cyan); color:var(--cyan); padding:8px 20px; cursor:pointer; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.08em; transition:all .2s; }
-  .btn-retry:hover { background:rgba(56,189,248,.1); }
+  .btn-retry:hover { background:rgba(249,115,22,.1); }
 
   /* LAYOUT */
   .page { padding:20px 28px 32px; max-width:1800px; margin:0 auto; }
@@ -118,17 +116,17 @@
   .tc-seg { display:flex; border:1px solid var(--border); overflow:hidden; }
   .tc-seg-btn, .tc-grp-btn { background:transparent; border:none; border-right:1px solid var(--border); color:var(--txt3); font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.07em; padding:3px 8px; cursor:pointer; transition:all .15s; }
   .tc-seg-btn:last-child, .tc-grp-btn:last-child { border-right:none; }
-  .tc-seg-btn:hover, .tc-grp-btn:hover { color:var(--txt); background:rgba(255,255,255,.04); }
-  .tc-seg-btn.active, .tc-grp-btn.active { background:rgba(56,189,248,.15); color:var(--cyan); }
+  .tc-seg-btn:hover, .tc-grp-btn:hover { color:var(--txt); background:rgba(0,0,0,.04); }
+  .tc-seg-btn.active, .tc-grp-btn.active { background:rgba(249,115,22,.15); color:var(--cyan); }
   .tc-list { display:flex; flex-direction:column; gap:3px; flex:1; overflow:hidden; }
-  .tc-row { display:grid; grid-template-columns:22px 1fr auto; align-items:center; gap:8px; padding:3px 0; border-bottom:1px solid rgba(255,255,255,.04); }
+  .tc-row { display:grid; grid-template-columns:22px 1fr auto; align-items:center; gap:8px; padding:3px 0; border-bottom:1px solid rgba(0,0,0,.04); }
   .tc-rank { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--txt3); text-align:right; }
   .tc-name-cell { display:flex; align-items:center; gap:5px; overflow:hidden; min-width:0; }
   .tc-name { font-size:10px; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-shrink:1; }
   .tc-badges { display:flex; gap:3px; flex-shrink:0; }
   .tc-badge { font-family:'JetBrains Mono',monospace; font-size:8px; padding:0 4px; border-radius:2px; white-space:nowrap; }
   .tc-bar-wrap { display:flex; align-items:center; gap:6px; min-width:80px; }
-  .tc-bar-bg { flex:1; height:4px; background:rgba(255,255,255,.06); border-radius:2px; }
+  .tc-bar-bg { flex:1; height:4px; background:rgba(0,0,0,.06); border-radius:2px; }
   .tc-bar-fill { height:4px; background:var(--blue); border-radius:2px; transition:width .25s; }
   .tc-val { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--txt2); white-space:nowrap; }
   .tc-pager { display:flex; align-items:center; justify-content:space-between; padding-top:6px; border-top:1px solid var(--border); margin-top:4px; }
@@ -141,7 +139,7 @@
     color:var(--txt2); font-family:'JetBrains Mono',monospace;
     font-size:9px; padding:3px 7px; cursor:pointer; outline:none;
   }
-  .cf-sel:hover, .cf-sel:focus { border-color:rgba(56,189,248,.4); color:var(--cyan); }
+  .cf-sel:hover, .cf-sel:focus { border-color:rgba(249,115,22,.4); color:var(--cyan); }
   .cf-sel option { background:var(--panel); color:var(--txt); }
   .date-range-picker { display:none; align-items:center; gap:4px; }
   .date-range-picker.visible { display:flex; }
@@ -149,15 +147,15 @@
     background:var(--surface); border:1px solid var(--border);
     color:var(--txt2); font-family:'JetBrains Mono',monospace;
     font-size:9px; padding:3px 6px; cursor:pointer; outline:none;
-    color-scheme: dark;
+    color-scheme: light;
   }
-  .cf-date:focus { border-color:rgba(56,189,248,.4); color:var(--cyan); }
+  .cf-date:focus { border-color:rgba(249,115,22,.4); color:var(--cyan); }
   .cf-apply {
-    background:rgba(56,189,248,.12); border:1px solid rgba(56,189,248,.3);
+    background:rgba(249,115,22,.12); border:1px solid rgba(249,115,22,.3);
     color:var(--cyan); font-family:'JetBrains Mono',monospace;
     font-size:9px; padding:3px 8px; cursor:pointer; outline:none;
   }
-  .cf-apply:hover { background:rgba(56,189,248,.22); }
+  .cf-apply:hover { background:rgba(249,115,22,.22); }
 
   /* KPIs */
   .kpi-row { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin-bottom:20px; }
@@ -242,7 +240,7 @@
     width: var(--chat-w);
     max-width: calc(100vw - 60px);
     height:calc(100dvh - var(--hdr-h));
-    background:#0d1626; border-left:1px solid var(--border);
+    background:#ffffff; border-left:1px solid var(--border);
     display:flex; flex-direction:column;
     box-shadow:-6px 0 32px rgba(0,0,0,.5);
     transition:width .25s ease;
@@ -258,7 +256,7 @@
 
   /* ── History panel ── */
   .chat-hist-panel {
-    position:absolute; inset:0; background:#0d1626; z-index:5;
+    position:absolute; inset:0; background:#ffffff; z-index:5;
     display:flex; flex-direction:column;
     transform:translateX(100%); transition:transform .2s ease;
   }
@@ -266,7 +264,7 @@
 
   .chat-hist-head {
     display:flex; align-items:center; justify-content:space-between;
-    padding:12px 16px; border-bottom:1px solid rgba(56,189,248,.15); flex-shrink:0;
+    padding:12px 16px; border-bottom:1px solid rgba(249,115,22,.15); flex-shrink:0;
   }
   .chat-hist-label {
     font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.14em;
@@ -280,33 +278,33 @@
 
   .chat-hist-list { flex:1; overflow-y:auto; }
   .chat-hist-list::-webkit-scrollbar { width:3px; }
-  .chat-hist-list::-webkit-scrollbar-thumb { background:rgba(56,189,248,.18); border-radius:2px; }
+  .chat-hist-list::-webkit-scrollbar-thumb { background:rgba(249,115,22,.18); border-radius:2px; }
 
   .chat-hist-new {
     display:flex; align-items:center; justify-content:center; gap:8px; width:100%;
     padding:12px 16px; margin-bottom:8px;
-    background:rgba(56,189,248,.08);
-    border:1.5px solid rgba(56,189,248,.35); border-radius:8px;
+    background:rgba(249,115,22,.08);
+    border:1.5px solid rgba(249,115,22,.35); border-radius:8px;
     color:var(--cyan); font-size:13px; font-weight:600;
     font-family:'JetBrains Mono',monospace; letter-spacing:.06em;
     cursor:pointer; text-align:center; flex-shrink:0;
     transition:background .18s, border-color .18s, box-shadow .18s;
-    box-shadow:0 0 10px rgba(56,189,248,.08);
+    box-shadow:0 0 10px rgba(249,115,22,.08);
   }
   .chat-hist-new:hover {
-    background:rgba(56,189,248,.18);
-    border-color:rgba(56,189,248,.7);
-    box-shadow:0 0 16px rgba(56,189,248,.25);
+    background:rgba(249,115,22,.18);
+    border-color:rgba(249,115,22,.7);
+    box-shadow:0 0 16px rgba(249,115,22,.25);
   }
 
   .chat-hist-item {
     display:flex; align-items:center; gap:6px;
     padding:11px 16px 11px 16px; cursor:pointer;
     border-left:2px solid transparent; transition:all .15s;
-    border-bottom:1px solid rgba(255,255,255,.03);
+    border-bottom:1px solid rgba(0,0,0,.03);
   }
-  .chat-hist-item:hover { background:rgba(255,255,255,.03); border-left-color:rgba(56,189,248,.3); }
-  .chat-hist-item.active { background:rgba(56,189,248,.06); border-left-color:var(--cyan); }
+  .chat-hist-item:hover { background:rgba(0,0,0,.03); border-left-color:rgba(249,115,22,.3); }
+  .chat-hist-item.active { background:rgba(249,115,22,.06); border-left-color:var(--cyan); }
   .chi-info { flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; }
   .chi-title {
     font-size:12px; color:var(--txt); line-height:1.4;
@@ -388,21 +386,21 @@
     box-shadow: 4px 0 0 var(--cyan);
   }
   .chat-resize-handle:hover, .chat-resize-handle.active {
-    background:rgba(56,189,248,.06);
+    background:rgba(249,115,22,.06);
   }
 
   /* floating reopen button */
   .chat-open-btn {
     position:fixed; right:0; top:50%; transform:translateY(-50%);
     z-index:201; writing-mode:vertical-rl;
-    background:#0c1525; border:1px solid rgba(56,189,248,.4); border-right:none;
+    background:#fff7ed; border:1px solid rgba(249,115,22,.4); border-right:none;
     color:var(--cyan); font-family:'JetBrains Mono',monospace;
     font-size:10px; letter-spacing:.12em; padding:14px 7px;
     cursor:pointer; display:none; transition:all .2s;
     border-radius:6px 0 0 6px;
   }
   .chat-open-btn.visible { display:block; }
-  .chat-open-btn:hover { background:rgba(56,189,248,.08); border-color:var(--cyan); }
+  .chat-open-btn:hover { background:rgba(249,115,22,.08); border-color:var(--cyan); }
 
   /* ── MOBILE ─────────────────────────────────────────── */
   @media (max-width: 768px) {
@@ -425,8 +423,8 @@
 
   .chat-head {
     padding:14px 16px 12px; flex-shrink:0;
-    background:linear-gradient(180deg,#101d33 0%,#0d1626 100%);
-    border-bottom:1px solid rgba(56,189,248,.15);
+    background:linear-gradient(180deg,#f8fafc 0%,#ffffff 100%);
+    border-bottom:1px solid rgba(249,115,22,.15);
     display:flex; flex-direction:column; justify-content:center; gap:6px;
   }
   .chat-head-title {
@@ -443,17 +441,17 @@
     cursor:pointer; line-height:1.4; transition:all .15s; flex-shrink:0;
     border-radius:4px;
   }
-  .chat-collapse-btn:hover { border-color:var(--cyan); color:var(--cyan); background:rgba(56,189,248,.06); }
+  .chat-collapse-btn:hover { border-color:var(--cyan); color:var(--cyan); background:rgba(249,115,22,.06); }
 
   .chat-msgs {
     flex:1; overflow-y:auto; padding:16px 12px;
     display:flex; flex-direction:column; gap:12px;
-    background:#0a0e14;
+    background:#f1f5f9;
   }
   .chat-msgs::-webkit-scrollbar { width:3px; }
   .chat-msgs::-webkit-scrollbar-track { background:transparent; }
-  .chat-msgs::-webkit-scrollbar-thumb { background:rgba(56,189,248,.18); border-radius:2px; }
-  .chat-msgs::-webkit-scrollbar-thumb:hover { background:rgba(56,189,248,.4); }
+  .chat-msgs::-webkit-scrollbar-thumb { background:rgba(249,115,22,.18); border-radius:2px; }
+  .chat-msgs::-webkit-scrollbar-thumb:hover { background:rgba(249,115,22,.4); }
 
   .chat-msg { display:flex; flex-direction:column; animation:fadeUp .25s ease both; }
   .chat-msg.user { align-items:flex-end; }
@@ -468,25 +466,25 @@
   .msg-bubble li { margin-bottom:3px; }
   .msg-bubble strong { font-weight:600; color:var(--txt); }
   .msg-bubble em { font-style:italic; }
-  .msg-bubble code { font-family:'JetBrains Mono',monospace; font-size:11px; background:rgba(56,189,248,.1); color:var(--cyan); padding:1px 5px; border-radius:4px; }
-  .msg-bubble pre { background:#0a0e14; border:1px solid var(--border); border-radius:8px; padding:10px 12px; overflow-x:auto; margin:8px 0; }
-  .msg-bubble pre code { background:none; padding:0; font-size:11px; color:#e2e8f0; }
+  .msg-bubble code { font-family:'JetBrains Mono',monospace; font-size:11px; background:rgba(249,115,22,.1); color:var(--cyan); padding:1px 5px; border-radius:4px; }
+  .msg-bubble pre { background:#f1f5f9; border:1px solid var(--border); border-radius:8px; padding:10px 12px; overflow-x:auto; margin:8px 0; }
+  .msg-bubble pre code { background:none; padding:0; font-size:11px; color:#1e293b; }
   .msg-bubble table { border-collapse:collapse; font-size:11px; width:100%; margin:8px 0; border-radius:6px; overflow:hidden; }
-  .msg-bubble th { background:rgba(56,189,248,.08); font-weight:600; text-align:left; padding:5px 9px; border:1px solid var(--border); color:var(--cyan); }
+  .msg-bubble th { background:rgba(249,115,22,.08); font-weight:600; text-align:left; padding:5px 9px; border:1px solid var(--border); color:var(--cyan); }
   .msg-bubble td { padding:4px 9px; border:1px solid var(--border); color:var(--txt); }
-  .msg-bubble tr:nth-child(even) td { background:rgba(255,255,255,.02); }
+  .msg-bubble tr:nth-child(even) td { background:rgba(0,0,0,.02); }
   .msg-bubble h1,.msg-bubble h2,.msg-bubble h3 { font-size:13px; font-weight:700; margin:10px 0 5px; color:var(--txt); }
-  .msg-bubble blockquote { border-left:3px solid rgba(56,189,248,.35); margin:6px 0; padding-left:10px; color:var(--txt2); }
+  .msg-bubble blockquote { border-left:3px solid rgba(249,115,22,.35); margin:6px 0; padding-left:10px; color:var(--txt2); }
   .msg-bubble img { max-width:100%; border:1px solid var(--border); border-radius:6px; margin:8px 0; display:block; }
-  .msg-bubble a { color:var(--cyan); text-decoration:none; border-bottom:1px solid rgba(56,189,248,.3); }
+  .msg-bubble a { color:var(--cyan); text-decoration:none; border-bottom:1px solid rgba(249,115,22,.3); }
   .msg-bubble a:hover { border-bottom-color:var(--cyan); }
   .chat-msg.user .msg-bubble {
-    background:rgba(56,189,248,.13); border:1px solid rgba(56,189,248,.28); color:var(--txt);
+    background:rgba(249,115,22,.13); border:1px solid rgba(249,115,22,.28); color:var(--txt);
     border-bottom-right-radius:3px;
     box-shadow:0 2px 10px rgba(0,0,0,.25);
   }
   .chat-msg.assistant .msg-bubble {
-    background:#141c27; border:1px solid rgba(255,255,255,.07); color:var(--txt);
+    background:#f8fafc; border:1px solid rgba(0,0,0,.07); color:var(--txt);
     border-bottom-left-radius:3px;
     box-shadow:0 2px 10px rgba(0,0,0,.25);
   }
@@ -498,8 +496,8 @@
 
   .chat-input-wrap {
     padding:12px 12px calc(10px + env(safe-area-inset-bottom, 0px));
-    border-top:1px solid rgba(56,189,248,.1);
-    background:linear-gradient(0deg,#101d33 0%,#0d1626 100%);
+    border-top:1px solid rgba(249,115,22,.1);
+    background:linear-gradient(0deg,#f8fafc 0%,#ffffff 100%);
     display:flex; flex-direction:column; gap:8px; flex-shrink:0;
   }
   .chat-actions {
@@ -507,34 +505,34 @@
     padding-bottom:4px;
   }
   .chat-input {
-    width:100%; background:#141c27; border:1px solid var(--border);
+    width:100%; background:#f8fafc; border:1px solid var(--border);
     color:var(--txt); font-family:'Inter',sans-serif; font-size:12.5px;
     padding:9px 12px; resize:none; outline:none; line-height:1.5;
     max-height:120px; overflow-y:auto; border-radius:10px;
     transition:border-color .2s, box-shadow .2s;
   }
   .chat-input:focus {
-    border-color:rgba(56,189,248,.45);
-    box-shadow:0 0 0 3px rgba(56,189,248,.06);
+    border-color:rgba(249,115,22,.45);
+    box-shadow:0 0 0 3px rgba(249,115,22,.06);
   }
   .chat-input::placeholder { color:var(--txt3); }
   .chat-send {
     width:36px; height:36px; flex-shrink:0; background:var(--cyan); border:none;
-    color:#0a0e14; font-size:16px; font-weight:700; cursor:pointer;
+    color:#f1f5f9; font-size:16px; font-weight:700; cursor:pointer;
     display:flex; align-items:center; justify-content:center;
     transition:all .2s; border-radius:10px;
-    box-shadow:0 2px 10px rgba(56,189,248,.3);
+    box-shadow:0 2px 10px rgba(249,115,22,.3);
   }
-  .chat-send:hover { background:#7dd3fc; box-shadow:0 4px 16px rgba(56,189,248,.45); }
+  .chat-send:hover { background:#7dd3fc; box-shadow:0 4px 16px rgba(249,115,22,.45); }
   .chat-send:disabled { opacity:.3; cursor:not-allowed; box-shadow:none; }
   .chat-send.loading { opacity:1 !important; cursor:wait; }
   .chat-send.loading::after {
     content:''; display:block; width:16px; height:16px;
-    border:2px solid rgba(10,14,20,.35); border-top-color:#0a0e14;
+    border:2px solid rgba(241,245,249,.35); border-top-color:#f1f5f9;
     border-radius:50%; animation:spin .7s linear infinite;
   }
   .chat-screenshot {
-    width:36px; height:36px; flex-shrink:0; background:#1e293b;
+    width:36px; height:36px; flex-shrink:0; background:#e2e8f0;
     border:1px solid rgba(167,139,250,.25); color:#a78bfa; font-size:15px;
     cursor:pointer; display:flex; align-items:center; justify-content:center;
     transition:all .2s; border-radius:10px;
@@ -558,7 +556,7 @@
   #imagePreviewWrap {
     display:none; align-items:center; gap:8px;
     padding:4px 2px 2px;
-    border-top:1px solid rgba(56,189,248,.08);
+    border-top:1px solid rgba(249,115,22,.08);
   }
   #imagePreviewWrap.visible { display:flex; }
   .img-thumb-wrap { position:relative; flex-shrink:0; }
@@ -578,12 +576,12 @@
   .img-thumb-remove:hover { background:#b91c1c; }
 
   .chat-mic {
-    width:36px; height:36px; flex-shrink:0; background:#1e293b;
-    border:1px solid rgba(56,189,248,.25); color:var(--cyan); font-size:15px;
+    width:36px; height:36px; flex-shrink:0; background:#e2e8f0;
+    border:1px solid rgba(249,115,22,.25); color:var(--cyan); font-size:15px;
     cursor:pointer; display:flex; align-items:center; justify-content:center;
     transition:all .2s; border-radius:10px;
   }
-  .chat-mic:hover { background:rgba(56,189,248,.1); border-color:rgba(56,189,248,.5); }
+  .chat-mic:hover { background:rgba(249,115,22,.1); border-color:rgba(249,115,22,.5); }
   .chat-mic:disabled { opacity:.3; cursor:not-allowed; }
   .chat-mic.recording {
     background:rgba(239,68,68,.15); border-color:#ef4444; color:#ef4444;
@@ -595,7 +593,7 @@
   }
   .audio-review {
     flex:1; display:none; align-items:center; gap:8px;
-    background:#141c27; border:1px solid rgba(56,189,248,.25);
+    background:#f8fafc; border:1px solid rgba(249,115,22,.25);
     border-radius:10px; padding:6px 10px;
   }
   .audio-review.visible { display:flex; }
@@ -619,7 +617,7 @@
 
   /* THINKING UI */
   .thinking-wrap {
-    background:rgba(56,189,248,.04); border:1px solid rgba(56,189,248,.12);
+    background:rgba(249,115,22,.04); border:1px solid rgba(249,115,22,.12);
     border-radius:10px; overflow:hidden; margin-bottom:8px;
     font-family:'JetBrains Mono',monospace; font-size:10px;
   }
@@ -627,13 +625,13 @@
     display:flex; align-items:center; gap:6px; padding:7px 11px;
     cursor:pointer; user-select:none; color:var(--cyan); letter-spacing:.08em;
   }
-  .thinking-header:hover { background:rgba(56,189,248,.06); }
+  .thinking-header:hover { background:rgba(249,115,22,.06); }
   .thinking-count { color:var(--txt3); margin-left:auto; font-size:9px; }
   .thinking-chevron { font-size:9px; color:var(--txt3); transition:transform .2s; }
   .thinking-wrap.open .thinking-chevron { transform:rotate(180deg); }
   .thinking-live {
     padding:7px 11px; color:var(--txt2); line-height:1.6;
-    border-top:1px solid rgba(56,189,248,.08); word-break:break-word;
+    border-top:1px solid rgba(249,115,22,.08); word-break:break-word;
   }
   .thinking-live.is-tool { color:#5b8fb9; }
   .thinking-tool-inline { color:#5b8fb9; font-size:9px; letter-spacing:.06em; display:block; margin-top:3px; }
@@ -643,7 +641,7 @@
     animation:blink .75s step-end infinite;
   }
   @keyframes blink { 50%{opacity:0} }
-  .thinking-history { border-top:1px solid rgba(56,189,248,.08); display:none; max-height:220px; overflow-y:auto; }
+  .thinking-history { border-top:1px solid rgba(249,115,22,.08); display:none; max-height:220px; overflow-y:auto; }
   .thinking-wrap.open .thinking-history { display:block; }
   .thinking-step {
     padding:5px 11px; color:#94a3b8; border-bottom:1px solid rgba(30,45,61,.5);
@@ -703,7 +701,7 @@
   .tab-nav {
     display: flex; align-items: center; gap: 6px;
     padding: 10px 20px;
-    background: rgba(10,14,20,0.98); border-bottom: 1px solid var(--border);
+    background: rgba(241,245,249,0.98); border-bottom: 1px solid var(--border);
     position: sticky; top: 58px; z-index: 99;
   }
   .tab-btn {
@@ -715,27 +713,27 @@
   }
   .tab-btn:hover {
     color: var(--txt);
-    background: rgba(56,189,248,0.06);
-    border-color: rgba(56,189,248,0.15);
+    background: rgba(249,115,22,0.06);
+    border-color: rgba(249,115,22,0.15);
   }
   .tab-btn.active {
-    color: #0a0e14;
+    color: #f1f5f9;
     background: var(--cyan);
     border-color: var(--cyan);
-    box-shadow: 0 0 16px rgba(56,189,248,0.35);
+    box-shadow: 0 0 16px rgba(249,115,22,0.35);
   }
-  .tab-btn.active i { color: #0a0e14; }
+  .tab-btn.active i { color: #f1f5f9; }
 
   /* ── Arquitetura section ── */
-  .arq-section { font-family: 'Inter', sans-serif; background-color:#0B0F19; color:#e2e8f0; background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 0); background-size: 24px 24px; }
+  .arq-section { font-family: 'Inter', sans-serif; background-color:#f8fafc; color:#1e293b; background-image: radial-gradient(rgba(0,0,0,0.05) 1px, transparent 0); background-size: 24px 24px; }
   .arq-inner { max-width: 100%; padding: 40px 48px 64px; display: flex; flex-direction: column; gap: 48px; }
   .arq-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
   .arq-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
   .arq-grid-6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; }
   @media (max-width: 1024px) { .arq-grid-2 { grid-template-columns: 1fr; } }
   @media (max-width: 768px)  { .arq-grid-3 { grid-template-columns: 1fr; } .arq-grid-6 { grid-template-columns: repeat(2, 1fr); } }
-  .arq-card { border: 1px solid #1e293b; border-radius: 12px; background: #0f1520; padding: 24px; position: relative; overflow: hidden; }
-  .arq-card-dark { border: 1px solid #0f172a; border-radius: 12px; background: #0B0F19; padding: 16px; }
+  .arq-card { border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff; padding: 24px; position: relative; overflow: hidden; }
+  .arq-card-dark { border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc; padding: 16px; }
   .mermaid-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   @media (min-width: 768px) { .mermaid-wrap { display: flex; justify-content: center; } }
   .mermaid svg { height: auto !important; min-width: 700px; background: transparent !important; }
@@ -768,11 +766,7 @@
 
 <header>
   <div class="logo">
-    <div class="logo-hex"></div>
-    <div>
-      <div class="logo-name">MFG CONTROL <span style="font-size:10px;font-weight:500;color:var(--yellow);background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);padding:1px 6px;letter-spacing:.08em;vertical-align:middle;">DEMO</span></div>
-      <div class="logo-sub">PRODUCTION INTELLIGENCE — DADOS SIMULADOS</div>
-    </div>
+    <img src="/static/images/logo.png" alt="POSH" class="logo-img">
   </div>
   <div class="hdr-r">
     <div class="api-status" id="apiStatus">API —</div>
@@ -800,7 +794,7 @@
 </header>
 
 <nav class="tab-nav">
-  <button onclick="openAudit()" title="Auditoria de erros de geração de código" style="margin-left:auto;background:none;border:1px solid #1e293b;border-radius:5px;color:#475569;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;padding:4px 10px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:color .15s,border-color .15s;" onmouseenter="this.style.color='#94a3b8';this.style.borderColor='#334155';" onmouseleave="this.style.color='#475569';this.style.borderColor='#1e293b';">
+  <button onclick="openAudit()" title="Auditoria de erros de geração de código" style="margin-left:auto;background:none;border:1px solid #e2e8f0;border-radius:5px;color:#475569;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;padding:4px 10px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:color .15s,border-color .15s;" onmouseenter="this.style.color='#94a3b8';this.style.borderColor='#94a3b8';" onmouseleave="this.style.color='#475569';this.style.borderColor='#e2e8f0';">
     <i class="fa-solid fa-bug" style="font-size:10px;"></i> error audit
   </button>
 </nav>
@@ -811,15 +805,15 @@
 
 <!-- ── Painel de Alertas ───────────────────────────────────────────────────── -->
 <div id="alertsOverlay" onclick="closeAlertsPanel()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;backdrop-filter:blur(2px);"></div>
-<aside id="alertsPanel" style="display:none;position:fixed;top:58px;right:0;height:calc(100vh - 58px);width:380px;max-width:95vw;background:#0f1520;border-left:1px solid #1e293b;z-index:1001;flex-direction:column;transform:translateX(100%);transition:transform .25s ease;">
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #1e293b;flex-shrink:0;">
+<aside id="alertsPanel" style="display:none;position:fixed;top:58px;right:0;height:calc(100vh - 58px);width:380px;max-width:95vw;background:#ffffff;border-left:1px solid #e2e8f0;z-index:1001;flex-direction:column;transform:translateX(100%);transition:transform .25s ease;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #e2e8f0;flex-shrink:0;">
     <div>
       <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#ef4444;letter-spacing:.14em;text-transform:uppercase;margin-bottom:3px;">Alertas do Agente</div>
-      <div style="font-size:14px;font-weight:600;color:#f8fafc;">Notificações</div>
+      <div style="font-size:14px;font-weight:600;color:#1e293b;">Notificações</div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;">
-      <button onclick="markAllAlertsRead()" style="background:none;border:1px solid #1e293b;border-radius:6px;color:#94a3b8;padding:4px 10px;font-size:11px;cursor:pointer;font-family:'JetBrains Mono',monospace;">✓ Marcar todas lidas</button>
-      <button onclick="deleteAllAlerts()" style="background:none;border:1px solid #3f1515;border-radius:6px;color:#7f1d1d;padding:4px 10px;font-size:11px;cursor:pointer;font-family:'JetBrains Mono',monospace;" onmouseover="this.style.color='#ef4444';this.style.borderColor='#7f1d1d'" onmouseout="this.style.color='#7f1d1d';this.style.borderColor='#3f1515'">🗑 Apagar todas</button>
+      <button onclick="markAllAlertsRead()" style="background:none;border:1px solid #e2e8f0;border-radius:6px;color:#94a3b8;padding:4px 10px;font-size:11px;cursor:pointer;font-family:'JetBrains Mono',monospace;">✓ Marcar todas lidas</button>
+      <button onclick="deleteAllAlerts()" style="background:none;border:1px solid #fecaca;border-radius:6px;color:#7f1d1d;padding:4px 10px;font-size:11px;cursor:pointer;font-family:'JetBrains Mono',monospace;" onmouseover="this.style.color='#ef4444';this.style.borderColor='#7f1d1d'" onmouseout="this.style.color='#7f1d1d';this.style.borderColor='#fecaca'">🗑 Apagar todas</button>
       <button onclick="closeAlertsPanel()" style="background:none;border:none;color:#64748b;font-size:20px;cursor:pointer;line-height:1;">✕</button>
     </div>
   </div>
@@ -830,15 +824,15 @@
 
 <!-- ── Slide-over: Agenda de Relatórios ─────────────────────────────────── -->
 <div id="agendaOverlay" onclick="closeAgenda()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;backdrop-filter:blur(2px);"></div>
-<aside id="agendaPanel" style="display:none;position:fixed;top:0;right:0;height:100vh;width:420px;max-width:95vw;background:#0f1520;border-left:1px solid #1e293b;z-index:1001;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease;">
+<aside id="agendaPanel" style="display:none;position:fixed;top:0;right:0;height:100vh;width:420px;max-width:95vw;background:#ffffff;border-left:1px solid #e2e8f0;z-index:1001;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease;">
   <!-- Header do painel -->
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid #1e293b;flex-shrink:0;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid #e2e8f0;flex-shrink:0;">
     <div>
       <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#6366f1;letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px;">Agendamentos</div>
-      <div style="font-size:15px;font-weight:600;color:#f8fafc;">Tarefas</div>
+      <div style="font-size:15px;font-weight:600;color:#1e293b;">Tarefas</div>
     </div>
     <div style="display:flex;align-items:center;gap:10px;">
-      <button onclick="loadAgenda()" style="background:none;border:1px solid #1e293b;border-radius:6px;color:#94a3b8;padding:5px 10px;font-size:12px;cursor:pointer;">↺ Atualizar</button>
+      <button onclick="loadAgenda()" style="background:none;border:1px solid #e2e8f0;border-radius:6px;color:#94a3b8;padding:5px 10px;font-size:12px;cursor:pointer;">↺ Atualizar</button>
       <button onclick="closeAgenda()" style="background:none;border:none;color:#64748b;font-size:20px;cursor:pointer;line-height:1;">✕</button>
     </div>
   </div>
@@ -849,8 +843,8 @@
   </div>
 
   <!-- Footer -->
-  <div style="padding:16px 24px;border-top:1px solid #1e293b;flex-shrink:0;">
-    <button onclick="closeAgenda();openChat();" style="width:100%;padding:10px;background:#312e81;border:1px solid #4338ca;border-radius:8px;color:#e0e7ff;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.04em;">
+  <div style="padding:16px 24px;border-top:1px solid #e2e8f0;flex-shrink:0;">
+    <button onclick="closeAgenda();openChat();" style="width:100%;padding:10px;background:#e0e7ff;border:1px solid #4338ca;border-radius:8px;color:#4338ca;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.04em;">
       + Nova tarefa via chat
     </button>
   </div>
@@ -858,33 +852,33 @@
 
 <!-- ── Slide-over: Error Audit ───────────────────────────────────────────── -->
 <div id="auditOverlay" onclick="closeAudit()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;backdrop-filter:blur(2px);"></div>
-<aside id="auditPanel" style="display:none;position:fixed;top:0;right:0;height:100vh;width:640px;max-width:95vw;background:#0f1520;border-left:1px solid #1e293b;z-index:1001;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease;">
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid #1e293b;flex-shrink:0;">
+<aside id="auditPanel" style="display:none;position:fixed;top:0;right:0;height:100vh;width:640px;max-width:95vw;background:#ffffff;border-left:1px solid #e2e8f0;z-index:1001;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid #e2e8f0;flex-shrink:0;">
     <div>
       <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#475569;letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px;">Dev Tool</div>
-      <div style="font-size:15px;font-weight:600;color:#f8fafc;">Error Audit <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#475569;font-weight:400;">— erros de geração de task_code</span></div>
+      <div style="font-size:15px;font-weight:600;color:#1e293b;">Error Audit <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#475569;font-weight:400;">— erros de geração de task_code</span></div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;">
-      <button onclick="loadAudit()" style="background:none;border:1px solid #1e293b;border-radius:6px;color:#94a3b8;padding:5px 10px;font-size:12px;cursor:pointer;">↺</button>
+      <button onclick="loadAudit()" style="background:none;border:1px solid #e2e8f0;border-radius:6px;color:#94a3b8;padding:5px 10px;font-size:12px;cursor:pointer;">↺</button>
       <button onclick="clearAllAudit()" style="background:none;border:1px solid #7f1d1d;border-radius:6px;color:#f87171;padding:5px 10px;font-size:12px;cursor:pointer;" title="Apagar todos os registros">🗑 Limpar tudo</button>
-      <button onclick="closeAudit()" style="background:none;border:1px solid #1e293b;border-radius:6px;color:#94a3b8;padding:5px 10px;font-size:12px;cursor:pointer;">✕</button>
+      <button onclick="closeAudit()" style="background:none;border:1px solid #e2e8f0;border-radius:6px;color:#94a3b8;padding:5px 10px;font-size:12px;cursor:pointer;">✕</button>
     </div>
   </div>
   <!-- Resumo de padrões -->
-  <div id="auditSummary" style="flex-shrink:0;padding:12px 24px;border-bottom:1px solid #1e293b;display:flex;flex-wrap:wrap;gap:8px;"></div>
+  <div id="auditSummary" style="flex-shrink:0;padding:12px 24px;border-bottom:1px solid #e2e8f0;display:flex;flex-wrap:wrap;gap:8px;"></div>
   <!-- Filtro por task -->
-  <div style="flex-shrink:0;padding:10px 24px;border-bottom:1px solid #1e293b;display:flex;gap:8px;align-items:center;">
-    <input id="auditFilter" type="text" placeholder="filtrar por task_id ou erro…" oninput="renderAudit()" style="flex:1;background:#141c27;border:1px solid #1e293b;border-radius:5px;color:#e2e8f0;font-family:'JetBrains Mono',monospace;font-size:11px;padding:5px 10px;outline:none;">
-    <select id="auditSort" onchange="renderAudit()" style="background:#141c27;border:1px solid #1e293b;border-radius:5px;color:#94a3b8;font-size:11px;padding:5px 8px;cursor:pointer;">
+  <div style="flex-shrink:0;padding:10px 24px;border-bottom:1px solid #e2e8f0;display:flex;gap:8px;align-items:center;">
+    <input id="auditFilter" type="text" placeholder="filtrar por task_id ou erro…" oninput="renderAudit()" style="flex:1;background:#f8fafc;border:1px solid #e2e8f0;border-radius:5px;color:#1e293b;font-family:'JetBrains Mono',monospace;font-size:11px;padding:5px 10px;outline:none;">
+    <select id="auditSort" onchange="renderAudit()" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:5px;color:#94a3b8;font-size:11px;padding:5px 8px;cursor:pointer;">
       <option value="newest">Mais recente</option>
       <option value="task">Por task</option>
     </select>
   </div>
   <!-- Toolbar de seleção -->
-  <div id="auditToolbar" style="display:none;align-items:center;justify-content:space-between;padding:8px 24px;border-bottom:1px solid #1e293b;flex-shrink:0;background:#0d1829;">
+  <div id="auditToolbar" style="display:none;align-items:center;justify-content:space-between;padding:8px 24px;border-bottom:1px solid #e2e8f0;flex-shrink:0;background:#f1f5f9;">
     <span id="auditSelCount" style="font-size:11px;color:#94a3b8;font-family:'JetBrains Mono',monospace;"></span>
     <div style="display:flex;gap:8px;">
-      <button onclick="selectAllAudit()" style="background:none;border:1px solid #1e293b;border-radius:6px;color:#94a3b8;padding:4px 10px;font-size:11px;cursor:pointer;" onmouseover="this.style.borderColor='#38bdf8';this.style.color='#38bdf8'" onmouseout="this.style.borderColor='#1e293b';this.style.color='#94a3b8'">Selecionar todos</button>
+      <button onclick="selectAllAudit()" style="background:none;border:1px solid #e2e8f0;border-radius:6px;color:#94a3b8;padding:4px 10px;font-size:11px;cursor:pointer;" onmouseover="this.style.borderColor='#f97316';this.style.color='#f97316'" onmouseout="this.style.borderColor='#e2e8f0';this.style.color='#94a3b8'">Selecionar todos</button>
       <button onclick="deleteSelectedAudit()" style="background:none;border:1px solid #7f1d1d;border-radius:6px;color:#f87171;padding:4px 10px;font-size:11px;cursor:pointer;" onmouseover="this.style.background='rgba(248,113,113,.1)'" onmouseout="this.style.background='none'">🗑 Apagar selecionados</button>
     </div>
   </div>
@@ -896,18 +890,18 @@
 
 <!-- ── Modal: Audit Code ────────────────────────────────────────────────── -->
 <div id="auditCodeOverlay" onclick="closeAuditCode()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:2000;backdrop-filter:blur(3px);"></div>
-<div id="auditCodeModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2001;background:#0f1520;border:1px solid #1e293b;border-radius:12px;width:min(800px,95vw);max-height:85vh;flex-direction:column;box-shadow:0 25px 60px rgba(0,0,0,.6);">
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #1e293b;flex-shrink:0;">
+<div id="auditCodeModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2001;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;width:min(800px,95vw);max-height:85vh;flex-direction:column;box-shadow:0 25px 60px rgba(0,0,0,.6);">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #e2e8f0;flex-shrink:0;">
     <div>
       <span style="font-size:10px;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;color:#f87171;">ERROR AUDIT</span>
-      <span id="auditCodeModalTitle" style="margin-left:10px;font-size:13px;font-weight:600;color:#f1f5f9;"></span>
+      <span id="auditCodeModalTitle" style="margin-left:10px;font-size:13px;font-weight:600;color:#1e293b;"></span>
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
-      <button onclick="copyAuditCode()" id="auditCodeCopyBtn" style="font-size:11px;padding:4px 10px;background:#1e293b;border:1px solid #334155;border-radius:6px;color:#94a3b8;cursor:pointer;">Copiar</button>
+      <button onclick="copyAuditCode()" id="auditCodeCopyBtn" style="font-size:11px;padding:4px 10px;background:#e2e8f0;border:1px solid #94a3b8;border-radius:6px;color:#94a3b8;cursor:pointer;">Copiar</button>
       <button onclick="closeAuditCode()" style="background:none;border:none;color:#64748b;font-size:18px;cursor:pointer;line-height:1;">✕</button>
     </div>
   </div>
-  <pre id="auditCodeText" style="flex:1;overflow:auto;margin:0;padding:18px;font-size:12px;font-family:'JetBrains Mono',monospace;color:#94a3b8;line-height:1.6;white-space:pre;word-break:normal;background:#080d15;border-radius:0 0 12px 12px;"></pre>
+  <pre id="auditCodeText" style="flex:1;overflow:auto;margin:0;padding:18px;font-size:12px;font-family:'JetBrains Mono',monospace;color:#94a3b8;line-height:1.6;white-space:pre;word-break:normal;background:#f8fafc;border-radius:0 0 12px 12px;"></pre>
 </div>
 
 <!-- ── Slide-over: Artifacts ────────────────────────────────────────────── -->
@@ -915,26 +909,26 @@
 
 <!-- Modal de erro de execução -->
 <div id="runErrorOverlay" onclick="closeRunError()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:2000;backdrop-filter:blur(3px);"></div>
-<div id="runErrorModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2001;background:#0f1520;border:1px solid #3f1a1a;border-radius:12px;width:min(680px,92vw);max-height:80vh;flex-direction:column;box-shadow:0 25px 60px rgba(0,0,0,.6);">
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #1e293b;">
+<div id="runErrorModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2001;background:#ffffff;border:1px solid #fecaca;border-radius:12px;width:min(680px,92vw);max-height:80vh;flex-direction:column;box-shadow:0 25px 60px rgba(0,0,0,.6);">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #e2e8f0;">
     <span style="font-size:12px;font-weight:600;color:#f87171;font-family:'JetBrains Mono',monospace;letter-spacing:.05em;">ERRO DE EXECUÇÃO</span>
     <div style="display:flex;gap:8px;align-items:center;">
-      <button onclick="copyRunError()" id="runErrorCopyBtn" style="font-size:11px;padding:4px 10px;background:#1e293b;border:1px solid #334155;border-radius:6px;color:#94a3b8;cursor:pointer;">Copiar</button>
+      <button onclick="copyRunError()" id="runErrorCopyBtn" style="font-size:11px;padding:4px 10px;background:#e2e8f0;border:1px solid #94a3b8;border-radius:6px;color:#94a3b8;cursor:pointer;">Copiar</button>
       <button onclick="closeRunError()" style="background:none;border:none;color:#64748b;font-size:18px;cursor:pointer;line-height:1;">✕</button>
     </div>
   </div>
-  <pre id="runErrorText" style="flex:1;overflow:auto;margin:0;padding:18px;font-size:12px;font-family:'JetBrains Mono',monospace;color:#fca5a5;line-height:1.6;white-space:pre-wrap;word-break:break-word;background:#080d15;border-radius:0 0 12px 12px;"></pre>
+  <pre id="runErrorText" style="flex:1;overflow:auto;margin:0;padding:18px;font-size:12px;font-family:'JetBrains Mono',monospace;color:#fca5a5;line-height:1.6;white-space:pre-wrap;word-break:break-word;background:#f8fafc;border-radius:0 0 12px 12px;"></pre>
 </div>
 <!-- Modal: código da tarefa -->
 <div id="taskCodeOverlay" onclick="closeTaskCode()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:2000;backdrop-filter:blur(3px);"></div>
-<div id="taskCodeModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2001;background:#0f1520;border:1px solid #1e293b;border-radius:12px;width:min(760px,95vw);max-height:85vh;flex-direction:column;box-shadow:0 25px 60px rgba(0,0,0,.6);">
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #1e293b;flex-shrink:0;">
+<div id="taskCodeModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2001;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;width:min(760px,95vw);max-height:85vh;flex-direction:column;box-shadow:0 25px 60px rgba(0,0,0,.6);">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #e2e8f0;flex-shrink:0;">
     <div>
       <span style="font-size:10px;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;color:#6366f1;">CÓDIGO DA TAREFA</span>
-      <span id="taskCodeModalTitle" style="margin-left:10px;font-size:13px;font-weight:600;color:#f1f5f9;"></span>
+      <span id="taskCodeModalTitle" style="margin-left:10px;font-size:13px;font-weight:600;color:#1e293b;"></span>
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
-      <button onclick="copyTaskCode()" id="taskCodeCopyBtn" style="font-size:11px;padding:4px 10px;background:#1e293b;border:1px solid #334155;border-radius:6px;color:#94a3b8;cursor:pointer;">Copiar</button>
+      <button onclick="copyTaskCode()" id="taskCodeCopyBtn" style="font-size:11px;padding:4px 10px;background:#e2e8f0;border:1px solid #94a3b8;border-radius:6px;color:#94a3b8;cursor:pointer;">Copiar</button>
       <button onclick="closeTaskCode()" style="background:none;border:none;color:#64748b;font-size:18px;cursor:pointer;line-height:1;">✕</button>
     </div>
   </div>
@@ -942,35 +936,35 @@
     <div id="taskCodeBody" style="flex:1;overflow:auto;">
       <!-- conteúdo injetado via JS -->
     </div>
-    <div id="taskCodeVersions" style="border-top:1px solid #1e293b;padding:12px 18px;flex-shrink:0;">
+    <div id="taskCodeVersions" style="border-top:1px solid #e2e8f0;padding:12px 18px;flex-shrink:0;">
       <!-- histórico de versões injetado via JS -->
     </div>
   </div>
 </div>
 
-<aside id="artifactsPanel" style="display:none;position:fixed;top:0;right:0;height:100vh;width:480px;max-width:95vw;background:#0f1520;border-left:1px solid #1e293b;z-index:1001;flex-direction:column;transform:translateX(100%);transition:transform .25s ease;">
+<aside id="artifactsPanel" style="display:none;position:fixed;top:0;right:0;height:100vh;width:480px;max-width:95vw;background:#ffffff;border-left:1px solid #e2e8f0;z-index:1001;flex-direction:column;transform:translateX(100%);transition:transform .25s ease;">
   <!-- Header -->
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid #1e293b;flex-shrink:0;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid #e2e8f0;flex-shrink:0;">
     <div>
       <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#0ea5e9;letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px;">PDFs · Gráficos · Excel</div>
-      <div style="font-size:15px;font-weight:600;color:#f8fafc;">Artifacts</div>
+      <div style="font-size:15px;font-weight:600;color:#1e293b;">Artifacts</div>
     </div>
     <div style="display:flex;align-items:center;gap:10px;">
-      <button onclick="loadArtifacts()" style="background:none;border:1px solid #1e293b;border-radius:6px;color:#94a3b8;padding:5px 10px;font-size:12px;cursor:pointer;">↺ Atualizar</button>
+      <button onclick="loadArtifacts()" style="background:none;border:1px solid #e2e8f0;border-radius:6px;color:#94a3b8;padding:5px 10px;font-size:12px;cursor:pointer;">↺ Atualizar</button>
       <button onclick="closeArtifacts()" style="background:none;border:none;color:#64748b;font-size:20px;cursor:pointer;line-height:1;">✕</button>
     </div>
   </div>
   <!-- Filtro de origem -->
-  <div style="display:flex;gap:8px;padding:12px 24px;border-bottom:1px solid #1e293b;flex-shrink:0;">
-    <button id="af-all"  onclick="setArtifactFilter('all')"  style="flex:1;padding:5px;border-radius:6px;border:1px solid #6366f1;background:#312e81;color:#e0e7ff;font-size:11px;cursor:pointer;">Todos</button>
-    <button id="af-task" onclick="setArtifactFilter('task')" style="flex:1;padding:5px;border-radius:6px;border:1px solid #1e293b;background:none;color:#64748b;font-size:11px;cursor:pointer;">Tarefas</button>
-    <button id="af-chat" onclick="setArtifactFilter('chat')" style="flex:1;padding:5px;border-radius:6px;border:1px solid #1e293b;background:none;color:#64748b;font-size:11px;cursor:pointer;">Chat</button>
+  <div style="display:flex;gap:8px;padding:12px 24px;border-bottom:1px solid #e2e8f0;flex-shrink:0;">
+    <button id="af-all"  onclick="setArtifactFilter('all')"  style="flex:1;padding:5px;border-radius:6px;border:1px solid #6366f1;background:#e0e7ff;color:#4338ca;font-size:11px;cursor:pointer;">Todos</button>
+    <button id="af-task" onclick="setArtifactFilter('task')" style="flex:1;padding:5px;border-radius:6px;border:1px solid #e2e8f0;background:none;color:#64748b;font-size:11px;cursor:pointer;">Tarefas</button>
+    <button id="af-chat" onclick="setArtifactFilter('chat')" style="flex:1;padding:5px;border-radius:6px;border:1px solid #e2e8f0;background:none;color:#64748b;font-size:11px;cursor:pointer;">Chat</button>
   </div>
   <!-- Toolbar de seleção -->
-  <div id="af-toolbar" style="display:none;align-items:center;justify-content:space-between;padding:8px 24px;border-bottom:1px solid #1e293b;flex-shrink:0;background:#0d1829;">
+  <div id="af-toolbar" style="display:none;align-items:center;justify-content:space-between;padding:8px 24px;border-bottom:1px solid #e2e8f0;flex-shrink:0;background:#f1f5f9;">
     <span id="af-sel-count" style="font-size:11px;color:#94a3b8;font-family:'JetBrains Mono',monospace;"></span>
     <div style="display:flex;gap:8px;">
-      <button onclick="selectAllArtifacts()" style="background:none;border:1px solid #1e293b;border-radius:6px;color:#94a3b8;padding:4px 10px;font-size:11px;cursor:pointer;" onmouseover="this.style.borderColor='#38bdf8';this.style.color='#38bdf8'" onmouseout="this.style.borderColor='#1e293b';this.style.color='#94a3b8'">Selecionar todos</button>
+      <button onclick="selectAllArtifacts()" style="background:none;border:1px solid #e2e8f0;border-radius:6px;color:#94a3b8;padding:4px 10px;font-size:11px;cursor:pointer;" onmouseover="this.style.borderColor='#f97316';this.style.color='#f97316'" onmouseout="this.style.borderColor='#e2e8f0';this.style.color='#94a3b8'">Selecionar todos</button>
       <button onclick="deleteSelectedArtifacts()" style="background:none;border:1px solid #7f1d1d;border-radius:6px;color:#f87171;padding:4px 10px;font-size:11px;cursor:pointer;" onmouseover="this.style.background='rgba(248,113,113,.1)'" onmouseout="this.style.background='none'">🗑 Deletar selecionados</button>
     </div>
   </div>
@@ -1006,7 +1000,7 @@
   </div>
   <div class="kpi-row" id="kpiRow"></div>
 
-  <!-- Row 1: Orders by month + Alertas por cliente -->
+  <!-- Row 1: Orders by month + Pedidos por status -->
   <div class="g2">
     <div class="card">
       <div class="card-head">
@@ -1022,28 +1016,19 @@
     </div>
     <div class="card">
       <div class="card-head">
-        <div class="card-title"><div class="ctdot" style="background:var(--orange)"></div>Alertas resolvidos por cliente</div>
-        <div class="card-controls">
-          <div class="tc-seg" id="alertDimGrpSeg">
-            <button class="tc-grp-btn active" data-groupby="name" onclick="setAlertDimGroupBy(this)">Nome</button>
-            <button class="tc-grp-btn" data-groupby="cnpj" onclick="setAlertDimGroupBy(this)">CNPJ</button>
-            <button class="tc-grp-btn" data-groupby="state" onclick="setAlertDimGroupBy(this)">Estado</button>
-            <button class="tc-grp-btn" data-groupby="city" onclick="setAlertDimGroupBy(this)">Cidade</button>
-            <button class="tc-grp-btn" data-groupby="channel" onclick="setAlertDimGroupBy(this)">Canal</button>
-          </div>
-        </div>
+        <div class="card-title"><div class="ctdot" style="background:var(--green)"></div>Pedidos por status</div>
       </div>
       <div class="card-body">
-        <div id="alertDimList" style="height:230px;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;"></div>
+        <div class="ch-wrap" style="height:230px"><canvas id="ordersByStatusChart"></canvas></div>
       </div>
     </div>
   </div>
 
-  <!-- Row 2: Top customers + Error ratio -->
+  <!-- Row 2: Top customers + Pedidos por dimensão de cliente -->
   <div class="g2">
     <div class="card">
       <div class="card-head">
-        <div class="card-title"><div class="ctdot" style="background:var(--blue)"></div>Clientes por pedidos processados</div>
+        <div class="card-title"><div class="ctdot" style="background:var(--blue)"></div>Pedidos por Cliente</div>
         <div class="card-controls">
           <div class="tc-seg">
             <button class="tc-seg-btn active" data-metric="total_orders" onclick="setTopCustomersMetric(this)">Pedidos</button>
@@ -1062,29 +1047,27 @@
     </div>
     <div class="card">
       <div class="card-head">
-        <div class="card-title"><div class="ctdot" style="background:var(--red)"></div>Itens com inconsistência vs sem inconsistência</div>
-      </div>
-      <div class="card-body">
-        <div class="ch-wrap" style="height:220px"><canvas id="errorRatioChart"></canvas></div>
-        <div id="errorRatioStats" style="display:flex;justify-content:space-around;padding:8px 4px 2px;border-top:1px solid var(--border);margin-top:6px;gap:4px">
-          <div style="text-align:center;flex:1">
-            <div id="erStatOrders" style="font-size:18px;font-weight:700;color:var(--red);font-family:'JetBrains Mono',monospace">—</div>
-            <div style="font-size:9px;color:var(--muted);margin-top:2px">pedidos afetados</div>
+        <div class="card-title"><div class="ctdot" style="background:var(--purple)"></div>Pedidos por dimensão de canal e local</div>
+        <div class="card-controls">
+          <div class="tc-seg" id="custDimMetricSeg">
+            <button class="tc-seg-btn active" data-metric="total_orders" onclick="setCustDimMetric(this)">Pedidos</button>
+            <button class="tc-seg-btn" data-metric="total_items" onclick="setCustDimMetric(this)">Itens</button>
+            <button class="tc-seg-btn" data-metric="total_value" onclick="setCustDimMetric(this)">Valor</button>
           </div>
-          <div style="text-align:center;flex:1">
-            <div id="erStatPct" style="font-size:18px;font-weight:700;color:var(--red);font-family:'JetBrains Mono',monospace">—</div>
-            <div style="font-size:9px;color:var(--muted);margin-top:2px">% dos pedidos</div>
-          </div>
-          <div style="text-align:center;flex:1">
-            <div id="erStatAvg" style="font-size:18px;font-weight:700;color:var(--red);font-family:'JetBrains Mono',monospace">—</div>
-            <div style="font-size:9px;color:var(--muted);margin-top:2px">itens/pedido afetado</div>
+          <div class="tc-seg" id="custDimGrpSeg">
+            <button class="tc-grp-btn active" data-groupby="channel" onclick="setCustDimGroupBy(this)">Canal</button>
+            <button class="tc-grp-btn" data-groupby="state" onclick="setCustDimGroupBy(this)">Estado</button>
+            <button class="tc-grp-btn" data-groupby="city" onclick="setCustDimGroupBy(this)">Cidade</button>
           </div>
         </div>
+      </div>
+      <div class="card-body">
+        <div class="ch-wrap" style="height:220px"><canvas id="custDimChart"></canvas></div>
       </div>
     </div>
   </div>
 
-  <!-- Row 3: Value trend + Alert resolve by status -->
+  <!-- Row 3: Value trend + Error ratio -->
   <div class="g2">
     <div class="card">
       <div class="card-head">
@@ -1116,42 +1099,65 @@
     </div>
     <div class="card">
       <div class="card-head">
-        <div class="card-title"><div class="ctdot" style="background:var(--orange)"></div>Alertas resolvidos por status</div>
+        <div class="card-title"><div class="ctdot" style="background:var(--red)"></div>Itens com inconsistência vs sem inconsistência</div>
       </div>
       <div class="card-body">
-        <div class="ch-wrap" style="height:220px"><canvas id="alertResolveStatusChart"></canvas></div>
+        <div class="ch-wrap" style="height:220px"><canvas id="errorRatioChart"></canvas></div>
+        <div id="errorRatioStats" style="display:flex;justify-content:space-around;padding:8px 4px 2px;border-top:1px solid var(--border);margin-top:6px;gap:4px">
+          <div style="text-align:center;flex:1" title="Quantidade de pedidos do período que possuem pelo menos um item com inconsistência (erro identificado).">
+            <div id="erStatOrders" style="font-size:18px;font-weight:700;color:var(--red);font-family:'JetBrains Mono',monospace">—</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:2px;cursor:help;border-bottom:1px dotted var(--muted)">pedidos afetados</div>
+          </div>
+          <div style="text-align:center;flex:1" title="Percentual de pedidos do período que possuem pelo menos um item com inconsistência, em relação ao total de pedidos.">
+            <div id="erStatPct" style="font-size:18px;font-weight:700;color:var(--red);font-family:'JetBrains Mono',monospace">—</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:2px;cursor:help;border-bottom:1px dotted var(--muted)">% dos pedidos</div>
+          </div>
+          <div style="text-align:center;flex:1" title="Número médio de itens com inconsistência em cada pedido afetado.">
+            <div id="erStatAvg" style="font-size:18px;font-weight:700;color:var(--red);font-family:'JetBrains Mono',monospace">—</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:2px;cursor:help;border-bottom:1px dotted var(--muted)">itens/pedido afetado</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Row 4: Top products + Pedidos por dimensão de cliente -->
+  <!-- Row 4: Top products + Alertas resolvidos por cliente -->
   <div class="g2">
     <div class="card">
       <div class="card-head">
-        <div class="card-title"><div class="ctdot" style="background:var(--cyan)"></div>Top 10 produtos — unidades pedidas <span style="font-size:10px;color:var(--txt3);font-weight:400;">(todo o período)</span></div>
+        <div class="card-title"><div class="ctdot" style="background:var(--cyan)"></div>Produtos — unidades pedidas <span style="font-size:10px;color:var(--txt3);font-weight:400;">(todo o período)</span></div>
       </div>
       <div class="card-body">
-        <div class="ch-wrap" style="height:220px"><canvas id="topProductsChart"></canvas></div>
+        <div id="topProductsList" style="height:220px;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;"></div>
       </div>
     </div>
     <div class="card">
       <div class="card-head">
-        <div class="card-title"><div class="ctdot" style="background:var(--purple)"></div>Pedidos por dimensão de cliente</div>
+        <div class="card-title"><div class="ctdot" style="background:var(--orange)"></div>Alertas por cliente</div>
         <div class="card-controls">
-          <div class="tc-seg" id="custDimMetricSeg">
-            <button class="tc-seg-btn active" data-metric="total_orders" onclick="setCustDimMetric(this)">Pedidos</button>
-            <button class="tc-seg-btn" data-metric="total_items" onclick="setCustDimMetric(this)">Itens</button>
-            <button class="tc-seg-btn" data-metric="total_value" onclick="setCustDimMetric(this)">Valor</button>
-          </div>
-          <div class="tc-seg" id="custDimGrpSeg">
-            <button class="tc-grp-btn active" data-groupby="channel" onclick="setCustDimGroupBy(this)">Canal</button>
-            <button class="tc-grp-btn" data-groupby="state" onclick="setCustDimGroupBy(this)">Estado</button>
-            <button class="tc-grp-btn" data-groupby="city" onclick="setCustDimGroupBy(this)">Cidade</button>
+          <div class="tc-seg" id="alertDimGrpSeg">
+            <button class="tc-grp-btn active" data-groupby="name" onclick="setAlertDimGroupBy(this)">Nome</button>
+            <button class="tc-grp-btn" data-groupby="cnpj" onclick="setAlertDimGroupBy(this)">CNPJ</button>
+            <button class="tc-grp-btn" data-groupby="state" onclick="setAlertDimGroupBy(this)">Estado</button>
+            <button class="tc-grp-btn" data-groupby="city" onclick="setAlertDimGroupBy(this)">Cidade</button>
+            <button class="tc-grp-btn" data-groupby="channel" onclick="setAlertDimGroupBy(this)">Canal</button>
           </div>
         </div>
       </div>
       <div class="card-body">
-        <div class="ch-wrap" style="height:220px"><canvas id="custDimChart"></canvas></div>
+        <div id="alertDimList" style="height:230px;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 5: Alertas resolvidos por status -->
+  <div class="g2">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><div class="ctdot" style="background:var(--orange)"></div>Alertas por status</div>
+      </div>
+      <div class="card-body">
+        <div class="ch-wrap" style="height:220px"><canvas id="alertResolveStatusChart"></canvas></div>
       </div>
     </div>
   </div>
@@ -1182,7 +1188,7 @@
     </div>
     <div class="chat-head-sub" style="display:flex;align-items:center;justify-content:space-between;">
       <span>Pergunte sobre os dados, solicite gráficos, análises estatística ou relatórios.</span>
-      <button onclick="showHistory()" title="Conversas" style="background:none;border:1px solid rgba(56,189,248,.25);color:var(--cyan);font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:.08em;padding:3px 9px;cursor:pointer;border-radius:4px;transition:all .15s;" onmouseenter="this.style.background='rgba(56,189,248,.1)'" onmouseleave="this.style.background='none'">≡ CONVERSAS</button>
+      <button onclick="showHistory()" title="Conversas" style="background:none;border:1px solid rgba(249,115,22,.25);color:var(--cyan);font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:.08em;padding:3px 9px;cursor:pointer;border-radius:4px;transition:all .15s;" onmouseenter="this.style.background='rgba(249,115,22,.1)'" onmouseleave="this.style.background='none'">≡ CONVERSAS</button>
     </div>
   </div>
   <div class="chat-body">
@@ -1233,7 +1239,7 @@
 
 <div id="screenshotSpinner" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;">
   <div style="width:40px;height:40px;border:3px solid rgba(167,139,250,.3);border-top-color:#a78bfa;border-radius:50%;animation:spin .7s linear infinite;"></div>
-  <span style="color:#e2e8f0;font-size:13px;font-family:Inter,sans-serif;">Capturando...</span>
+  <span style="color:#1e293b;font-size:13px;font-family:Inter,sans-serif;">Capturando...</span>
 </div>
 
 <!-- Chart Modal -->
@@ -1287,7 +1293,7 @@ function sel(id) { return document.getElementById(id).value; }
 const gc = 'rgba(100,116,139,0.15)';
 const tc = '#64748b';
 function tip() {
-  return { backgroundColor:'#0f1520', borderColor:'#1e2d3d', borderWidth:1, titleColor:'#e2e8f0', bodyColor:'#94a3b8', titleFont:{family:'JetBrains Mono',size:11}, bodyFont:{family:'JetBrains Mono',size:11}, padding:10 };
+  return { backgroundColor:'#ffffff', borderColor:'#e2e8f0', borderWidth:1, titleColor:'#1e293b', bodyColor:'#94a3b8', titleFont:{family:'JetBrains Mono',size:11}, bodyFont:{family:'JetBrains Mono',size:11}, padding:10 };
 }
 function scX(extra={}) { return { grid:{color:gc}, ticks:{color:tc,font:{size:10,family:'JetBrains Mono'}}, ...extra }; }
 function scY(extra={}) { return { grid:{color:gc}, ticks:{color:tc,font:{size:10,family:'JetBrains Mono'}}, ...extra }; }
@@ -1474,6 +1480,30 @@ async function refreshOrdersMonth(ordSum) {
 }
 
 
+async function refreshOrdersByStatus(ordSum) {
+  try {
+    const COLORS = {
+      PROCESSED:    'rgba(52,211,153,.85)',
+      REJECTED:     'rgba(248,113,113,.85)',
+      INCONSISTENCY:'rgba(251,191,36,.85)',
+    };
+    const d = ordSum.by_status || [];
+    const labels = d.map(r => r.status);
+    const colors = labels.map(l => COLORS[l] || 'rgba(100,116,139,.7)');
+    mkChart('ordersByStatusChart', {
+      type: 'doughnut',
+      data: { labels, datasets: [{ data: d.map(r => Number(r.total)), backgroundColor: colors, borderWidth: 0, hoverOffset: 8 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '60%',
+        plugins: {
+          legend: { display: true, position: 'right', labels: { color: tc, font: { size: 10, family: 'JetBrains Mono' }, boxWidth: 10, padding: 10 } },
+          tooltip: { ...tip(), callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed.toLocaleString('pt-BR')}` } }
+        }
+      }
+    });
+  } catch(e) { console.error('ordersByStatusChart:', e); }
+}
+
 let _topCustomersData = [];
 let _topCustomersMetric = 'total_orders';
 let _topCustomersGroupBy = 'name';
@@ -1522,14 +1552,13 @@ function _renderTopCustomers() {
     const label = (_topCustomersGroupBy === 'cnpj' && cnpj) ? `${cnpj} (${name})` : name;
     const val = Number(r[metric]);
     const pct = maxVal > 0 ? (val / maxVal * 100).toFixed(1) : 0;
-    const cA = Number(r.cnt_approved || 0);
+    const cP = Number(r.cnt_processed || 0);
     const cI = Number(r.cnt_inconsistency || 0);
     const cR = Number(r.cnt_rejected || 0);
-    const cP = Number(r.cnt_pending || 0);
     const bdg = (cnt, color, title) => cnt > 0
       ? `<span class="tc-badge" style="color:${color};background:${color}22" title="${title}: ${cnt}">${cnt}</span>`
       : '';
-    const badges = bdg(cR,'#ef4444','Rejeitados') + bdg(cI,'#eab308','Inconsistência') + bdg(cA,'#22c55e','Aprovados') + bdg(cP,'#6b7280','Pendentes');
+    const badges = bdg(cP,'#22c55e','Processados') + bdg(cI,'#eab308','Inconsistência') + bdg(cR,'#ef4444','Rejeitados');
     return `<div class="tc-row">
       <span class="tc-rank">${rank}</span>
       <div class="tc-name-cell">
@@ -1842,8 +1871,8 @@ function _renderValueTrend(data) {
     data: { labels, datasets: [{
       label: s.name,
       data: s.data,
-      borderColor: '#38bdf8',
-      backgroundColor: 'rgba(56,189,248,0.08)',
+      borderColor: '#f97316',
+      backgroundColor: 'rgba(249,115,22,0.08)',
       borderWidth: 2,
       pointRadius: labels.length > 20 ? 0 : 3,
       pointHoverRadius: 5,
@@ -1872,43 +1901,95 @@ async function refreshValueTrend() {
 async function refreshAlertResolveStatus(data) {
   try {
     const PALETTE_ARS = [
-      'rgba(52,211,153,.85)',
       'rgba(248,113,113,.85)',
       'rgba(251,191,36,.85)',
       'rgba(96,165,250,.85)',
+      'rgba(52,211,153,.85)',
       'rgba(167,139,250,.85)',
       'rgba(251,146,60,.85)',
       'rgba(34,211,238,.85)',
     ];
-    const labels = data.map(r => r.status);
-    const colors = labels.map((_, i) => PALETTE_ARS[i % PALETTE_ARS.length]);
+    const categories = ['Inconsistência', 'Rejeitado', 'Processado'];
+    const errorTypes = [...new Set(data.map(r => r.error_type))];
+    const datasets = errorTypes.map((et, i) => ({
+      label: et,
+      data: categories.map(cat => Number(data.find(r => r.category === cat && r.error_type === et)?.total || 0)),
+      backgroundColor: PALETTE_ARS[i % PALETTE_ARS.length],
+      borderRadius: 3,
+      borderSkipped: false,
+    }));
     mkChart('alertResolveStatusChart', {
-      type: 'doughnut',
-      data: { labels, datasets: [{ data: data.map(r => Number(r.total)), backgroundColor: colors, borderWidth: 0, hoverOffset: 8 }] },
+      type: 'bar',
+      data: { labels: categories, datasets },
       options: {
-        responsive: true, maintainAspectRatio: false, cutout: '60%',
+        responsive: true, maintainAspectRatio: false,
         plugins: {
           legend: { display: true, position: 'right', labels: { color: tc, font: { size: 10, family: 'JetBrains Mono' }, boxWidth: 10, padding: 10 } },
-          tooltip: { ...tip(), callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed.toLocaleString('pt-BR')}` } }
+          tooltip: { ...tip(), callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')}` } }
+        },
+        scales: {
+          x: { stacked: true, grid: { display: false }, ticks: { color: tc, font: { size: 10, family: 'JetBrains Mono' } } },
+          y: { ...scY(), stacked: true }
         }
       }
     });
   } catch(e) { console.error('alertResolveStatusChart:', e); }
 }
 
+let _topProductsData = [];
+let _topProductsPage = 0;
+const TP_PAGE_SIZE = 8;
+
+function _renderTopProducts() {
+  const el = document.getElementById('topProductsList');
+  if (!el) return;
+  const d = _topProductsData;
+  const total = d.length;
+  const maxPages = Math.ceil(total / TP_PAGE_SIZE);
+  const start = _topProductsPage * TP_PAGE_SIZE;
+  const page = d.slice(start, start + TP_PAGE_SIZE);
+  const maxVal = Number(d[0]?.total_qty || 1);
+
+  const rows = page.map((r, i) => {
+    const rank = start + i + 1;
+    const name = r.part_number || r.market_name || 'N/A';
+    const desc = r.local_market_name || ((r.market_name && r.market_name !== name) ? r.market_name : '');
+    const val = Number(r.total_qty);
+    const pct = maxVal > 0 ? (val / maxVal * 100).toFixed(1) : 0;
+    return `<div class="tc-row" style="align-items:flex-start;">
+      <span class="tc-rank">${rank}</span>
+      <div class="tc-name-cell" style="flex-direction:column;align-items:flex-start;gap:1px;">
+        <span class="tc-name" style="display:block;width:100%;" title="${name}">${name}</span>
+        ${desc ? `<span class="tc-name" style="display:block;width:100%;font-size:8px;color:var(--txt3);" title="${desc}">${desc}</span>` : ''}
+      </div>
+      <div class="tc-bar-wrap">
+        <div class="tc-bar-bg"><div class="tc-bar-fill" style="width:${pct}%;background:var(--cyan)"></div></div>
+        <span class="tc-val">${val.toLocaleString('pt-BR')} un</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="tc-list">${rows}</div>
+    <div class="tc-pager">
+      <button class="tc-pager-btn" onclick="_tpPage(-1)" ${_topProductsPage === 0 ? 'disabled' : ''}>◀ Anterior</button>
+      <span class="tc-pager-info">${start+1}–${Math.min(start+TP_PAGE_SIZE,total)} de ${total}</span>
+      <button class="tc-pager-btn" onclick="_tpPage(1)" ${_topProductsPage >= maxPages-1 ? 'disabled' : ''}>Próximo ▶</button>
+    </div>`;
+}
+
+function _tpPage(dir) {
+  const maxPages = Math.ceil(_topProductsData.length / TP_PAGE_SIZE);
+  _topProductsPage = Math.max(0, Math.min(_topProductsPage + dir, maxPages - 1));
+  _renderTopProducts();
+}
+
 async function refreshTopProducts(itmSum) {
   try {
-    const d = itmSum.top_products.slice(0,10);
-    const labels = d.map(r => (r.part_number || r.market_name || '').slice(0,22));
-    mkChart('topProductsChart', {
-      type:'bar',
-      data:{ labels, datasets:[{ data: d.map(r=>Number(r.total_qty)), backgroundColor: PALETTE, borderRadius:3, borderSkipped:false }] },
-      options:{ responsive:true, maintainAspectRatio:false, indexAxis:'y',
-        plugins:{ legend:{display:false}, tooltip:{...tip(), callbacks:{label:ctx=>' '+ctx.parsed.x.toLocaleString('pt-BR')+' un'}} },
-        scales:{ x:scX(), y:{ grid:{display:false}, ticks:{color:tc, font:{size:10,family:'JetBrains Mono'}} } }
-      }
-    });
-  } catch(e) { console.error('topProductsChart:', e); }
+    _topProductsData = itmSum.top_products || [];
+    _topProductsPage = 0;
+    _renderTopProducts();
+  } catch(e) { console.error('topProductsList:', e); }
 }
 
 
@@ -1933,6 +2014,7 @@ async function refreshAll() {
     await Promise.all([
       refreshKPIs(ordSum, itmSum, alertPending),
       refreshOrdersMonth(ordSum),
+      refreshOrdersByStatus(ordSum),
       refreshTopCustomers(ordSum),
       refreshAlertDim(),
       refreshErrorRatio(itmSum),
@@ -2014,7 +2096,7 @@ async function loadCustomWidgets() {
               <circle cx="4" cy="9" r="1.2" fill="currentColor"/>
               <circle cx="8" cy="9" r="1.2" fill="currentColor"/>
             </svg>
-            <span class="card-title" style="flex:1;font-size:12px;font-weight:600;color:#e2e8f0;letter-spacing:.02em;">${_escHtml(w.title)}</span>
+            <span class="card-title" style="flex:1;font-size:12px;font-weight:600;color:#1e293b;letter-spacing:.02em;">${_escHtml(w.title)}</span>
             <button onclick="removeWidget('${w.id}')" title="Remover painel"
               style="background:none;border:none;cursor:pointer;color:#475569;font-size:16px;line-height:1;padding:2px 4px;">&times;</button>
           </div>
@@ -2086,11 +2168,11 @@ async function _renderWidget(widgetId) {
         maintainAspectRatio: false,
         plugins: {
           legend: { labels: { color: '#94a3b8', font: { size: 11 } } },
-          tooltip: { backgroundColor: '#1e293b', titleColor: '#e2e8f0', bodyColor: '#94a3b8' }
+          tooltip: { backgroundColor: '#e2e8f0', titleColor: '#1e293b', bodyColor: '#94a3b8' }
         },
         scales: ['bar','line','scatter'].includes(config.type) ? {
-          x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: '#1e293b' } },
-          y: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: '#1e293b' } }
+          x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: '#e2e8f0' } },
+          y: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: '#e2e8f0' } }
         } : undefined
       }, config.options || {}),
     });
@@ -2456,12 +2538,12 @@ function _addArtifactToChat(token, taskId, saved) {
   const urls   = { chart: `/chart/${id}`, pdf: `/pdf/${id}`, excel: `/excel/${id}` };
 
   const badge = saved
-    ? `<span style="background:#14532d;color:#4ade80;font-size:9px;padding:2px 8px;border-radius:99px;border:1px solid #16a34a44;">✔ Salvo</span>`
-    : `<span style="background:#1e3a5f;color:#93c5fd;font-size:9px;padding:2px 8px;border-radius:99px;border:1px solid #1d4ed844;">Preview</span>`;
+    ? `<span style="background:#dcfce7;color:#16a34a;font-size:9px;padding:2px 8px;border-radius:99px;border:1px solid #16a34a44;">✔ Salvo</span>`
+    : `<span style="background:#dbeafe;color:#2563eb;font-size:9px;padding:2px 8px;border-radius:99px;border:1px solid #1d4ed844;">Preview</span>`;
 
   const preview = type === 'chart'
-    ? `<img src="${urls[type]}" style="width:100%;border-radius:6px;margin-top:8px;border:1px solid #1e293b;"/>`
-    : `<a href="${urls[type]}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:7px 14px;background:#1e293b;border-radius:6px;color:#e2e8f0;font-size:13px;text-decoration:none;">
+    ? `<img src="${urls[type]}" style="width:100%;border-radius:6px;margin-top:8px;border:1px solid #e2e8f0;"/>`
+    : `<a href="${urls[type]}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:7px 14px;background:#e2e8f0;border-radius:6px;color:#1e293b;font-size:13px;text-decoration:none;">
         ${icons[type]} Abrir ${labels[type]}
        </a>`;
 
@@ -2469,7 +2551,7 @@ function _addArtifactToChat(token, taskId, saved) {
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
       <span style="font-size:12px;color:#94a3b8;">${icons[type]} ${labels[type]}</span>
       ${badge}
-      ${taskId ? `<span style="background:#1a1f2e;color:#64748b;font-size:9px;padding:2px 8px;border-radius:99px;border:1px solid #1e293b;">Tarefa ${taskId}</span>` : ''}
+      ${taskId ? `<span style="background:#f1f5f9;color:#64748b;font-size:9px;padding:2px 8px;border-radius:99px;border:1px solid #e2e8f0;">Tarefa ${taskId}</span>` : ''}
     </div>
     ${preview}`;
 
@@ -2792,7 +2874,7 @@ async function sendChat() {
   let userHtml = text ? text.replace(/</g, '&lt;') : '';
   if (_pendingImages.length) {
     userHtml += '<br>' + _pendingImages.map(b64 =>
-      `<img src="data:image/png;base64,${b64}" style="max-height:100px;border-radius:6px;margin-top:6px;margin-right:4px;border:1px solid #1e293b;">`
+      `<img src="data:image/png;base64,${b64}" style="max-height:100px;border-radius:6px;margin-top:6px;margin-right:4px;border:1px solid #e2e8f0;">`
     ).join('');
   }
   _addMsg('user', userHtml);
@@ -3180,15 +3262,15 @@ function freqLabel(t) {
 
 function statusBadge(status) {
   const map = {
-    active:           ['#166534','#4ade80','Ativa'],
-    running:          ['#0c2a4a','#38bdf8','Executando'],
-    error:            ['#7f1d1d','#f87171','Erro'],
-    completed:        ['#1e3a5f','#60a5fa','Concluída'],
-    cancelled:        ['#292524','#78716c','Cancelada'],
-    paused:           ['#292524','#a78bfa','Pausada'],
-    pending_approval: ['#2d1f00','#fb923c','Aguardando'],
+    active:           ['#dcfce7','#16a34a','Ativa'],
+    running:          ['#ffedd5','#ea580c','Executando'],
+    error:            ['#fee2e2','#dc2626','Erro'],
+    completed:        ['#dbeafe','#2563eb','Concluída'],
+    cancelled:        ['#f5f5f4','#78716c','Cancelada'],
+    paused:           ['#ede9fe','#7c3aed','Pausada'],
+    pending_approval: ['#fef3c7','#b45309','Aguardando'],
   };
-  const [bg, color, label] = map[status] || ['#1e293b','#94a3b8', status];
+  const [bg, color, label] = map[status] || ['#e2e8f0','#94a3b8', status];
   return `<span style="background:${bg};color:${color};font-size:10px;font-family:'JetBrains Mono',monospace;letter-spacing:.08em;padding:2px 8px;border-radius:99px;border:1px solid ${color}33;">${label}</span>`;
 }
 
@@ -3200,7 +3282,7 @@ function _runDuration(r) {
 }
 
 function _runStatusDot(status) {
-  const c = { success:'#4ade80', error:'#f87171', running:'#38bdf8' }[status] || '#64748b';
+  const c = { success:'#4ade80', error:'#f87171', running:'#f97316' }[status] || '#64748b';
   const anim = status === 'running' ? 'animation:pulse 1.6s ease-in-out infinite;' : '';
   return `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${c};flex-shrink:0;margin-top:3px;${anim}"></span>`;
 }
@@ -3213,22 +3295,22 @@ function _runsSection(runs) {
     const errFull = (r.error || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const err  = r.error ? `<div onclick="showRunError(this.dataset.err)" data-err="${errFull}" style="font-size:10px;color:#f87171;margin-top:2px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">⚠ ver erro ↗</div>` : '';
     return `
-    <div style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid #0f172a;">
+    <div style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid #e2e8f0;">
       ${_runStatusDot(r.status)}
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
           <span style="font-size:11px;color:#64748b;font-family:'JetBrains Mono',monospace;">${time}</span>
           ${dur ? `<span style="font-size:10px;color:#475569;">${dur}</span>` : ''}
-          ${r.status==='running' ? `<span style="font-size:10px;color:#38bdf8;font-family:'JetBrains Mono',monospace;">em execução…</span>` : ''}
+          ${r.status==='running' ? `<span style="font-size:10px;color:#f97316;font-family:'JetBrains Mono',monospace;">em execução…</span>` : ''}
         </div>
         ${err}
       </div>
     </div>`;
   }).join('');
   return `
-  <div style="margin-top:10px;border-top:1px solid #1e293b;padding-top:8px;">
+  <div style="margin-top:10px;border-top:1px solid #e2e8f0;padding-top:8px;">
     <div style="font-size:9px;color:#475569;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;margin-bottom:6px;">ÚLTIMAS EXECUÇÕES</div>
-    <div style="max-height:160px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#1e293b transparent;">
+    <div style="max-height:160px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#e2e8f0 transparent;">
       ${rows}
     </div>
   </div>`;
@@ -3243,21 +3325,21 @@ function renderTaskCard(t, isNew) {
   const newClass = isNew ? 'task-card-new' : '';
   const newTag = isNew ? `<span class="task-new-badge" style="position:absolute;top:-8px;left:12px;background:#6366f1;color:#fff;font-size:9px;font-weight:700;border-radius:99px;padding:1px 8px;letter-spacing:.06em;">NOVA</span>` : '';
   return `
-  <div class="${newClass}" style="background:#141c27;border:1px solid #1e293b;border-radius:10px;padding:16px;position:relative;${newStyle}">
+  <div class="${newClass}" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;position:relative;${newStyle}">
   ${newTag}
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px;">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#6366f1;font-weight:700;">[${t.id}]</span>
-        <span style="font-size:13px;font-weight:600;color:#f1f5f9;">${t.name || '—'}</span>
+        <span style="font-size:13px;font-weight:600;color:#1e293b;">${t.name || '—'}</span>
       </div>
       <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
         ${statusBadge(t.status)}${retryInfo}
         ${t.status === 'active' ? `
         <button onclick="runTaskNow('${t.id}', this)"
           title="Executar agora (sem aguardar o horário agendado)"
-          style="background:none;border:1px solid #166534;border-radius:6px;color:#4ade80;padding:3px 7px;font-size:12px;cursor:pointer;transition:all .15s;"
-          onmouseover="this.style.borderColor='#4ade80';this.style.background='rgba(74,222,128,.08)'"
-          onmouseout="this.style.borderColor='#166534';this.style.background='none'">
+          style="background:none;border:1px solid #16a34a;border-radius:6px;color:#16a34a;padding:3px 7px;font-size:12px;cursor:pointer;transition:all .15s;"
+          onmouseover="this.style.borderColor='#16a34a';this.style.background='rgba(22,163,74,.08)'"
+          onmouseout="this.style.borderColor='#16a34a';this.style.background='none'">
           ▶
         </button>` : ''}
         ${(t.status === 'active' || t.status === 'paused') ? `
@@ -3279,7 +3361,7 @@ function renderTaskCard(t, isNew) {
       </div>
       ${t.frequency !== 'on_demand' ? `<div>
         <div style="font-size:9px;color:#475569;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;margin-bottom:2px;">PRÓXIMA EXEC.</div>
-        <div style="font-size:12px;color:#38bdf8;">${t.next_run || '—'}</div>
+        <div style="font-size:12px;color:#f97316;">${t.next_run || '—'}</div>
       </div>` : '<div></div>'}
       <div>
         <div style="font-size:9px;color:#475569;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;margin-bottom:2px;">NOTIFICAÇÕES</div>
@@ -3301,7 +3383,7 @@ function renderTaskCard(t, isNew) {
               t.condition_operator === 'is_not_empty' ? 'executa se houver registros' :
               `executa se valor ${t.condition_operator} ${t.condition_threshold}`}
           </div>
-          <span style="font-size:10px;font-family:'JetBrains Mono',monospace;padding:1px 6px;border-radius:4px;${t.condition_state ? 'background:#3f1515;color:#f87171;' : 'background:#1e293b;color:#475569;'}">
+          <span style="font-size:10px;font-family:'JetBrains Mono',monospace;padding:1px 6px;border-radius:4px;${t.condition_state ? 'background:#fecaca;color:#dc2626;' : 'background:#e2e8f0;color:#475569;'}">
             ${t.condition_state ? '● ativa' : '○ aguardando'}
           </span>
         </div>
@@ -3311,7 +3393,7 @@ function renderTaskCard(t, isNew) {
         <div style="font-size:12px;color:#94a3b8;word-break:break-all;">${t.email}</div>
       </div>` : ''}
     </div>
-    <div style="font-size:11px;color:#475569;line-height:1.5;border-top:1px solid #1e293b;padding-top:8px;word-break:break-word;">${desc}</div>
+    <div style="font-size:11px;color:#475569;line-height:1.5;border-top:1px solid #e2e8f0;padding-top:8px;word-break:break-word;">${desc}</div>
     ${_runsSection(t.runs)}
   </div>`;
 }
@@ -3436,12 +3518,12 @@ async function openTaskCode(id) {
       _taskCodeCurrent = data.task_code;
       body.innerHTML = `
         <div style="font-size:9px;color:#475569;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;padding:10px 18px 6px;">CÓDIGO ATUAL</div>
-        <pre style="margin:0;padding:0 18px 18px;font-size:12px;font-family:'JetBrains Mono',monospace;color:#e2e8f0;line-height:1.65;white-space:pre;overflow:auto;background:#080d15;">${_escHtml(data.task_code)}</pre>`;
+        <pre style="margin:0;padding:0 18px 18px;font-size:12px;font-family:'JetBrains Mono',monospace;color:#1e293b;line-height:1.65;white-space:pre;overflow:auto;background:#f8fafc;">${_escHtml(data.task_code)}</pre>`;
     } else if (data.instructions) {
       _taskCodeCurrent = data.instructions;
       body.innerHTML = `
         <div style="font-size:9px;color:#475569;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;padding:10px 18px 6px;">INSTRUÇÕES (modo LLM)</div>
-        <pre style="margin:0;padding:0 18px 18px;font-size:12px;font-family:'JetBrains Mono',monospace;color:#94a3b8;line-height:1.65;white-space:pre-wrap;word-break:break-word;background:#080d15;">${_escHtml(data.instructions)}</pre>`;
+        <pre style="margin:0;padding:0 18px 18px;font-size:12px;font-family:'JetBrains Mono',monospace;color:#94a3b8;line-height:1.65;white-space:pre-wrap;word-break:break-word;background:#f8fafc;">${_escHtml(data.instructions)}</pre>`;
     } else {
       _taskCodeCurrent = '';
       body.innerHTML = '<div style="padding:32px;text-align:center;color:#475569;font-size:12px;">Nenhum código definido para esta tarefa.</div>';
@@ -3454,11 +3536,11 @@ async function openTaskCode(id) {
             <span style="font-size:10px;font-family:'JetBrains Mono',monospace;color:#6366f1;">v${v.version}</span>
             <span style="font-size:10px;color:#475569;">${(v.created_at||'').slice(0,16).replace('T',' ')}</span>
           </div>
-          <pre style="margin:0;padding:8px 12px;font-size:11px;font-family:'JetBrains Mono',monospace;color:#64748b;line-height:1.55;white-space:pre;overflow:auto;background:#0a1020;border:1px solid #1e293b;border-radius:6px;max-height:140px;">${_escHtml(v.code)}</pre>
+          <pre style="margin:0;padding:8px 12px;font-size:11px;font-family:'JetBrains Mono',monospace;color:#64748b;line-height:1.55;white-space:pre;overflow:auto;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;max-height:140px;">${_escHtml(v.code)}</pre>
         </div>`).join('');
       vers.innerHTML = `
         <div style="font-size:9px;color:#475569;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;margin-bottom:10px;">VERSÕES ANTERIORES (${data.versions.length})</div>
-        <div style="max-height:220px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#1e293b transparent;">${rows}</div>`;
+        <div style="max-height:220px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#e2e8f0 transparent;">${rows}</div>`;
     }
   } catch(e) {
     body.innerHTML = '<div style="padding:20px;color:#f87171;font-size:12px;">Erro ao carregar código.</div>';
@@ -3494,7 +3576,7 @@ function openAgenda() {
         if (countEl) countEl.textContent = activeTasks.length > 0 ? ` (${activeTasks.length})` : '';
         document.querySelectorAll('.task-card-new').forEach(el => {
           el.classList.remove('task-card-new');
-          el.style.borderColor = '#1e293b';
+          el.style.borderColor = '#e2e8f0';
           el.style.boxShadow = 'none';
         });
         document.querySelectorAll('.task-new-badge').forEach(el => el.remove());
@@ -3606,24 +3688,24 @@ function renderAudit() {
     const errFull  = (r.error || '').replace(/❌\s*/,'');
     const errShort = errFull.slice(0, 180);
     const errLong  = errFull.length > 180;
-    const phaseColor = r.phase === 'create' ? '#38bdf8' : '#a78bfa';
+    const phaseColor = r.phase === 'create' ? '#f97316' : '#a78bfa';
     const attemptColor = r.attempt >= 3 ? '#f87171' : r.attempt === 2 ? '#fb923c' : '#fbbf24';
     const hasCode = r.code && r.code.trim().length > 0;
     return `
-    <div id="acard-${r.id}" style="background:#141c27;border:1px solid #1e293b;border-radius:8px;padding:12px 14px;transition:border-color .15s;">
+    <div id="acard-${r.id}" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;transition:border-color .15s;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
         <input type="checkbox" onchange="toggleAuditSelect(${r.id}, this)" style="accent-color:#6366f1;width:14px;height:14px;cursor:pointer;flex-shrink:0;">
-        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#f8fafc;">task ${r.task_id}</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#1e293b;">task ${r.task_id}</span>
         <span style="font-family:'JetBrains Mono',monospace;font-size:10px;padding:1px 7px;border-radius:99px;border:1px solid ${phaseColor}44;color:${phaseColor};">${r.phase}</span>
         <span style="font-family:'JetBrains Mono',monospace;font-size:10px;padding:1px 7px;border-radius:99px;border:1px solid ${attemptColor}44;color:${attemptColor};">tentativa ${r.attempt}</span>
-        <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10px;color:#334155;">${ts}</span>
+        <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10px;color:#94a3b8;">${ts}</span>
       </div>
       <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#94a3b8;white-space:pre-wrap;word-break:break-all;line-height:1.5;">${errShort}${errLong ? '<span style="color:#475569;">…</span>' : ''}</div>
       <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;">
         ${errLong ? `<button onclick="openAuditError(${r.id})" style="background:none;border:1px solid #7f1d1d;border-radius:4px;color:#f87171;font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 10px;cursor:pointer;" onmouseover="this.style.borderColor='#f87171'" onmouseout="this.style.borderColor='#7f1d1d'">Ver erro completo</button>` : ''}
-        ${hasCode ? `<button onclick="openAuditCode(${r.id})" style="background:none;border:1px solid #1e293b;border-radius:4px;color:#6366f1;font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 10px;cursor:pointer;" onmouseover="this.style.borderColor='#6366f1'" onmouseout="this.style.borderColor='#1e293b'">⬡ Código com erro</button>` : ''}
-        ${hasCode ? `<button onclick="copyAuditCodeById(${r.id}, this)" style="background:none;border:1px solid #1e293b;border-radius:4px;color:#475569;font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 10px;cursor:pointer;" onmouseover="this.style.borderColor='#475569'" onmouseout="this.style.borderColor='#1e293b'">Copiar</button>` : ''}
-        <button onclick="deleteAuditEntry(${r.id}, this)" style="background:none;border:1px solid #1e293b;border-radius:4px;color:#475569;font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 10px;cursor:pointer;margin-left:auto;" onmouseover="this.style.color='#f87171';this.style.borderColor='#7f1d1d'" onmouseout="this.style.color='#475569';this.style.borderColor='#1e293b'" title="Apagar este registro">🗑</button>
+        ${hasCode ? `<button onclick="openAuditCode(${r.id})" style="background:none;border:1px solid #e2e8f0;border-radius:4px;color:#6366f1;font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 10px;cursor:pointer;" onmouseover="this.style.borderColor='#6366f1'" onmouseout="this.style.borderColor='#e2e8f0'">⬡ Código com erro</button>` : ''}
+        ${hasCode ? `<button onclick="copyAuditCodeById(${r.id}, this)" style="background:none;border:1px solid #e2e8f0;border-radius:4px;color:#475569;font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 10px;cursor:pointer;" onmouseover="this.style.borderColor='#475569'" onmouseout="this.style.borderColor='#e2e8f0'">Copiar</button>` : ''}
+        <button onclick="deleteAuditEntry(${r.id}, this)" style="background:none;border:1px solid #e2e8f0;border-radius:4px;color:#475569;font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 10px;cursor:pointer;margin-left:auto;" onmouseover="this.style.color='#f87171';this.style.borderColor='#7f1d1d'" onmouseout="this.style.color='#475569';this.style.borderColor='#e2e8f0'" title="Apagar este registro">🗑</button>
       </div>
     </div>`;
   }).join('');
@@ -3646,7 +3728,7 @@ function toggleAuditSelect(id, checkbox) {
     if (card) card.style.borderColor = '#6366f1';
   } else {
     _auditSelected.delete(id);
-    if (card) card.style.borderColor = '#1e293b';
+    if (card) card.style.borderColor = '#e2e8f0';
   }
   _updateAuditToolbar();
 }
@@ -3781,7 +3863,7 @@ function toggleArtifactSelect(key, checkbox) {
     if (card) card.style.borderColor = '#6366f1';
   } else {
     _selectedArtifacts.delete(key);
-    if (card) card.style.borderColor = '#1e293b';
+    if (card) card.style.borderColor = '#e2e8f0';
   }
   _updateSelectionUI();
 }
@@ -3796,7 +3878,7 @@ function selectAllArtifacts() {
     const cb     = card ? card.querySelector('input[type=checkbox]') : null;
     if (allSelected) {
       _selectedArtifacts.delete(key);
-      if (card) card.style.borderColor = '#1e293b';
+      if (card) card.style.borderColor = '#e2e8f0';
       if (cb) cb.checked = false;
     } else {
       _selectedArtifacts.add(key);
@@ -3821,34 +3903,34 @@ async function deleteSelectedArtifacts() {
 
 const ARTIFACT_ICONS = {
   pdf: `<svg width="22" height="26" viewBox="0 0 22 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="1" y="1" width="20" height="24" rx="3" fill="#1e0a0a" stroke="#ef4444" stroke-width="1.2"/>
+    <rect x="1" y="1" width="20" height="24" rx="3" fill="#fee2e2" stroke="#ef4444" stroke-width="1.2"/>
     <path d="M13 1v5a1 1 0 001 1h5" stroke="#ef4444" stroke-width="1.2" stroke-linecap="round"/>
     <text x="11" y="19" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="6.5" font-weight="700" fill="#ef4444">PDF</text>
   </svg>`,
   excel: `<svg width="22" height="26" viewBox="0 0 22 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="1" y="1" width="20" height="24" rx="3" fill="#0a1e0f" stroke="#4ade80" stroke-width="1.2"/>
-    <path d="M13 1v5a1 1 0 001 1h5" stroke="#4ade80" stroke-width="1.2" stroke-linecap="round"/>
-    <line x1="5" y1="11" x2="17" y2="11" stroke="#4ade80" stroke-width=".8" opacity=".5"/>
-    <line x1="5" y1="14.5" x2="17" y2="14.5" stroke="#4ade80" stroke-width=".8" opacity=".5"/>
-    <line x1="5" y1="18" x2="17" y2="18" stroke="#4ade80" stroke-width=".8" opacity=".5"/>
-    <line x1="11" y1="9" x2="11" y2="21" stroke="#4ade80" stroke-width=".8" opacity=".5"/>
-    <text x="11" y="19.5" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="5.5" font-weight="700" fill="#4ade80">XLS</text>
+    <rect x="1" y="1" width="20" height="24" rx="3" fill="#dcfce7" stroke="#16a34a" stroke-width="1.2"/>
+    <path d="M13 1v5a1 1 0 001 1h5" stroke="#16a34a" stroke-width="1.2" stroke-linecap="round"/>
+    <line x1="5" y1="11" x2="17" y2="11" stroke="#16a34a" stroke-width=".8" opacity=".5"/>
+    <line x1="5" y1="14.5" x2="17" y2="14.5" stroke="#16a34a" stroke-width=".8" opacity=".5"/>
+    <line x1="5" y1="18" x2="17" y2="18" stroke="#16a34a" stroke-width=".8" opacity=".5"/>
+    <line x1="11" y1="9" x2="11" y2="21" stroke="#16a34a" stroke-width=".8" opacity=".5"/>
+    <text x="11" y="19.5" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="5.5" font-weight="700" fill="#16a34a">XLS</text>
   </svg>`,
   chart: `<svg width="22" height="26" viewBox="0 0 22 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="1" y="1" width="20" height="24" rx="3" fill="#0a0f1e" stroke="#38bdf8" stroke-width="1.2"/>
-    <path d="M13 1v5a1 1 0 001 1h5" stroke="#38bdf8" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="5" y="17" width="3" height="5" rx=".5" fill="#38bdf8" opacity=".9"/>
+    <rect x="1" y="1" width="20" height="24" rx="3" fill="#ffedd5" stroke="#f97316" stroke-width="1.2"/>
+    <path d="M13 1v5a1 1 0 001 1h5" stroke="#f97316" stroke-width="1.2" stroke-linecap="round"/>
+    <rect x="5" y="17" width="3" height="5" rx=".5" fill="#f97316" opacity=".9"/>
     <rect x="9.5" y="13" width="3" height="9" rx=".5" fill="#818cf8" opacity=".9"/>
-    <rect x="14" y="15" width="3" height="7" rx=".5" fill="#38bdf8" opacity=".7"/>
+    <rect x="14" y="15" width="3" height="7" rx=".5" fill="#f97316" opacity=".7"/>
   </svg>`,
 };
 const ARTIFACT_LABELS = { pdf: 'PDF', chart: 'Gráfico', excel: 'Excel' };
 
 function _originBadge(a) {
   if (a.origin === 'task') {
-    return `<span style="background:#1e3a5f;color:#60a5fa;font-size:9px;font-family:'JetBrains Mono',monospace;padding:2px 7px;border-radius:99px;border:1px solid #1d4ed833;">Tarefa ${a.task_id}</span>`;
+    return `<span style="background:#dbeafe;color:#2563eb;font-size:9px;font-family:'JetBrains Mono',monospace;padding:2px 7px;border-radius:99px;border:1px solid #1d4ed833;">Tarefa ${a.task_id}</span>`;
   }
-  return `<span style="background:#1a2e1a;color:#4ade80;font-size:9px;font-family:'JetBrains Mono',monospace;padding:2px 7px;border-radius:99px;border:1px solid #16a34a33;">Chat</span>`;
+  return `<span style="background:#dcfce7;color:#16a34a;font-size:9px;font-family:'JetBrains Mono',monospace;padding:2px 7px;border-radius:99px;border:1px solid #16a34a33;">Chat</span>`;
 }
 
 function _artifactUrl(a) {
@@ -3863,25 +3945,25 @@ function renderArtifact(a) {
   const url = _artifactUrl(a);
   const key = `${a.type}:${a.id}`;
   const checked = _selectedArtifacts.has(key) ? 'checked' : '';
-  const borderColor = _selectedArtifacts.has(key) ? '#6366f1' : '#1e293b';
+  const borderColor = _selectedArtifacts.has(key) ? '#6366f1' : '#e2e8f0';
   const preview = a.type === 'chart'
-    ? `<img src="${url}" style="width:100%;border-radius:6px;margin-top:8px;border:1px solid #1e293b;" loading="lazy"/>`
+    ? `<img src="${url}" style="width:100%;border-radius:6px;margin-top:8px;border:1px solid #e2e8f0;" loading="lazy"/>`
     : '';
   return `
-  <div id="acard-${key.replace(':','-')}" style="background:#141c27;border:1px solid ${borderColor};border-radius:10px;padding:14px;transition:border-color .15s;">
+  <div id="acard-${key.replace(':','-')}" style="background:#f8fafc;border:1px solid ${borderColor};border-radius:10px;padding:14px;transition:border-color .15s;">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
       <div style="display:flex;align-items:center;gap:10px;min-width:0;">
         <input type="checkbox" ${checked} onchange="toggleArtifactSelect('${key}', this)"
           style="width:15px;height:15px;accent-color:#6366f1;flex-shrink:0;cursor:pointer;">
         <span style="display:flex;align-items:center;flex-shrink:0;">${ARTIFACT_ICONS[a.type]}</span>
         <div style="min-width:0;">
-          <div style="font-size:12px;font-weight:600;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</div>
+          <div style="font-size:12px;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</div>
           <div style="font-size:10px;color:#475569;margin-top:1px;">${dt}</div>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
         ${_originBadge(a)}
-        ${url ? `<a href="${url}" target="_blank" style="background:none;border:1px solid #1e293b;border-radius:6px;color:#38bdf8;padding:3px 8px;font-size:11px;text-decoration:none;">Abrir</a>` : ''}
+        ${url ? `<a href="${url}" target="_blank" style="background:none;border:1px solid #e2e8f0;border-radius:6px;color:#f97316;padding:3px 8px;font-size:11px;text-decoration:none;">Abrir</a>` : ''}
         <button onclick="deleteArtifact('${a.type}','${a.id}')" title="Deletar" style="background:none;border:1px solid #3f3f46;border-radius:6px;color:#71717a;padding:3px 7px;font-size:12px;cursor:pointer;" onmouseover="this.style.borderColor='#f87171';this.style.color='#f87171'" onmouseout="this.style.borderColor='#3f3f46';this.style.color='#71717a'">✕</button>
       </div>
     </div>
@@ -3894,9 +3976,9 @@ function setArtifactFilter(f) {
   ['all','task','chat'].forEach(k => {
     const btn = document.getElementById(`af-${k}`);
     const active = k === f;
-    btn.style.background = active ? '#312e81' : 'none';
-    btn.style.borderColor = active ? '#6366f1' : '#1e293b';
-    btn.style.color = active ? '#e0e7ff' : '#64748b';
+    btn.style.background = active ? '#e0e7ff' : 'none';
+    btn.style.borderColor = active ? '#6366f1' : '#e2e8f0';
+    btn.style.color = active ? '#4338ca' : '#64748b';
   });
   renderArtifactList();
 }
@@ -3999,22 +4081,22 @@ async function loadAlerts() {
     list.innerHTML = alerts.map(a => {
       const ts = new Date(a.created_at).toLocaleString('pt-BR');
       const unread = !a.read;
-      const border = unread ? 'border-left:3px solid #ef4444;' : 'border-left:3px solid #1e293b;';
-      const bg = unread ? 'background:#1a0a0a;' : 'background:#0d1117;';
+      const border = unread ? 'border-left:3px solid #ef4444;' : 'border-left:3px solid #e2e8f0;';
+      const bg = unread ? 'background:#fef2f2;' : 'background:#ffffff;';
       const valueInfo = (a.value != null && a.threshold != null)
         ? `<div style="font-size:10px;color:#64748b;margin-top:4px;font-family:'JetBrains Mono',monospace;">valor: ${Number(a.value).toFixed(2)} · threshold: ${Number(a.threshold).toFixed(2)}</div>`
         : '';
       const taskTag = a.task_id
-        ? `<span style="font-size:9px;background:#1e293b;color:#94a3b8;padding:1px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;" title="${a.task_name || ''}">[${a.task_id}]</span>`
+        ? `<span style="font-size:9px;background:#e2e8f0;color:#94a3b8;padding:1px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;" title="${a.task_name || ''}">[${a.task_id}]</span>`
         : '';
-      return `<div id="alert-${a.id}" style="padding:10px 12px;border-radius:6px;${bg}${border}transition:background .15s;position:relative;" onmouseover="this.style.background='#1a2030'" onmouseout="this.style.background='${unread ? '#1a0a0a' : '#0d1117'}'">
-        <button onclick="deleteAlert('${a.id}')" title="Apagar" style="position:absolute;top:6px;right:6px;background:none;border:none;color:#334155;font-size:14px;cursor:pointer;line-height:1;padding:2px 4px;border-radius:4px;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#334155'">✕</button>
+      return `<div id="alert-${a.id}" style="padding:10px 12px;border-radius:6px;${bg}${border}transition:background .15s;position:relative;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='${unread ? '#fef2f2' : '#ffffff'}'">
+        <button onclick="deleteAlert('${a.id}')" title="Apagar" style="position:absolute;top:6px;right:6px;background:none;border:none;color:#94a3b8;font-size:14px;cursor:pointer;line-height:1;padding:2px 4px;border-radius:4px;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#94a3b8'">✕</button>
         <div style="display:flex;align-items:flex-start;gap:8px;padding-right:20px;">
           <div style="font-size:12px;color:${unread ? '#fca5a5' : '#94a3b8'};line-height:1.4;flex:1;">${a.message}</div>
           ${taskTag}
         </div>
         ${valueInfo}
-        <div style="font-size:10px;color:#334155;margin-top:6px;">${ts}</div>
+        <div style="font-size:10px;color:#94a3b8;margin-top:6px;">${ts}</div>
       </div>`;
     }).join('');
   } catch (e) {
@@ -4024,11 +4106,11 @@ async function loadAlerts() {
 
 async function markAlertRead(alertId, el) {
   await fetch(`/alerts/${alertId}/read?user_id=${_userId}`, { method: 'POST' });
-  el.style.borderLeftColor = '#1e293b';
-  el.style.background = '#0d1117';
+  el.style.borderLeftColor = '#e2e8f0';
+  el.style.background = '#ffffff';
   el.querySelector('div > div:first-child').style.color = '#94a3b8';
-  el.onmouseover = () => el.style.background = '#1a2030';
-  el.onmouseout  = () => el.style.background = '#0d1117';
+  el.onmouseover = () => el.style.background = '#f1f5f9';
+  el.onmouseout  = () => el.style.background = '#ffffff';
   el.onclick = null;
   updateAlertsBadge();
 }

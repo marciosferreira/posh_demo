@@ -201,21 +201,23 @@ Valores conhecidos: `CNPJ_CUSTOMER_NOT_IDENTIFIED` · `CNPJ_DELIVERY_NOT_IDENTIF
 
 ### `alert_resolve` — resolução de inconsistências
 
-Representa uma tentativa de resolver as inconsistências de um pedido.
+Representa uma tentativa de resolver as inconsistências de um pedido. **O status real de cada `alert_resolve` é o status do `purchase_order` associado** (`purchase_order.status`, via `purchase_order_id`) — `INCONSISTENCY` (pendente de análise), `REJECTED` (rejeitado) ou `PROCESSED` (resolvido/processado).
 
 | Coluna | Tipo | Significado |
 |--------|------|-------------|
 | id | integer PK | Identificador interno |
-| purchase_order_id | integer | FK → purchase_order.id — pedido sendo resolvido |
-| customer_id | integer | FK → customer.id |
+| purchase_order_id | integer | FK → purchase_order.id — pedido sendo resolvido. **JOIN com purchase_order para saber o status real (INCONSISTENCY/REJECTED/PROCESSED)** |
+| customer_id | integer | FK → customer.id (pode ser NULL quando o erro é justamente "cliente/CNPJ não identificado") |
 | file_import_id | integer | FK → file_import.id |
-| status | enum | `PROCESSED` (resolvido) · `REJECTED` (rejeitado) · `INCONSISTENCY` (ainda pendente) — cast: `status::text` |
 | created_at | timestamp | Quando a resolução foi registrada — **dimensão temporal desta tabela** |
+| resolved_at | timestamp | Preenchido quando o alerta foi tratado. NULL = ainda pendente |
 | notify_reject_date | timestamp | Quando o cliente foi notificado da rejeição |
+
+> ⚠️ **NÃO use `resolved_at IS NOT NULL` como filtro de "resolvido"** — isso não separa corretamente pendentes/rejeitados/processados. Use `purchase_order.status::text` para isso.
 
 ---
 
-### `alert_resolve_error_type` — erros de uma resolução (N:N)
+### `alert_resolve_error_type` — erros de uma resolução (N:N) — **APENAS para pedidos INCONSISTENCY/REJECTED**
 
 Tabela de junção entre `alert_resolve` e `error_type`. Um alerta pode ter múltiplos erros.
 
@@ -223,6 +225,52 @@ Tabela de junção entre `alert_resolve` e `error_type`. Um alerta pode ter múl
 |--------|------|-------------|
 | alert_resolve_id | integer | FK → alert_resolve.id |
 | error_type_id | integer | FK → error_type.id |
+
+> ⚠️ **ARMADILHA CRÍTICA — tipos de erro de pedidos PROCESSED não estão aqui.**
+> Quando um `alert_resolve` é **processado** (`purchase_order.status = 'PROCESSED'`), seus registros em `alert_resolve_error_type` são **removidos/movidos** para `order_snapshot_item_issue` (campo `alert_name`). Um `LEFT JOIN alert_resolve_error_type` para um pedido `PROCESSED` retornará `NULL` (apareceria como "Sem tipo"), o que é **enganoso** — não significa que o pedido não teve erros.
+>
+> **Para obter o tipo de erro de um alerta, use sempre esta regra combinada:**
+> | Status do `purchase_order` | De onde vem o tipo de erro |
+> |---|---|
+> | `INCONSISTENCY` ou `REJECTED` | `alert_resolve_error_type` → `error_type.name` |
+> | `PROCESSED` | `order_snapshot_item_issue.alert_name` (via `order_snapshot.purchase_order_id = alert_resolve.purchase_order_id`) — **já é o nome do tipo, não precisa JOIN com `error_type`** |
+
+---
+
+### `order_snapshot` — snapshot do pedido no momento do processamento
+
+Criado quando um pedido é processado/resolvido. Liga `alert_resolve`/`purchase_order` aos itens com problema (`order_snapshot_item_issue`).
+
+| Coluna | Tipo | Significado |
+|--------|------|-------------|
+| id | integer PK | Identificador interno |
+| purchase_order_id | integer | FK → purchase_order.id — **mesmo pedido do `alert_resolve`** |
+| order_number | varchar | Número do pedido |
+| customer_id | integer (nullable) | FK → customer.id |
+| payload | jsonb | Snapshot completo do pedido no momento do processamento |
+| error_type_ids | jsonb | IDs de tipos de erro associados ao snapshot |
+| failure_reason | varchar | Motivo de falha, se houver |
+| resolved_by_user_id | integer (nullable) | Usuário que resolveu |
+| resolved_at | timestamp | Quando foi resolvido |
+| created_at | timestamp | Data de criação do snapshot |
+
+---
+
+### `order_snapshot_item_issue` — itens com problema de um snapshot (pedidos PROCESSED)
+
+Cada linha é um item específico que apresentou um alerta/inconsistência durante o processamento de um pedido `PROCESSED`. **`alert_name` é o nome do tipo de erro pronto para uso — não precisa mapear para `error_type`.**
+
+| Coluna | Tipo | Significado |
+|--------|------|-------------|
+| id | integer PK | Identificador interno |
+| order_snapshot_id | integer | FK → order_snapshot.id |
+| item_name | varchar | Nome/descrição do item conforme o pedido |
+| part_number | varchar (nullable) | Código do produto, se identificado |
+| **alert_name** | varchar | **Nome do tipo de erro/alerta deste item — equivalente a `error_type.name`, já pronto** (ex: `PART_NUMBER_NOT_IDENTIFIED`) |
+| resolved_product_id | integer (nullable) | FK → product.id, se o item foi resolvido para um produto |
+| resolved_accessory_id | integer (nullable) | FK → accessory.id, se resolvido para um acessório |
+| resolved_at | timestamp | Quando o item foi resolvido |
+| created_at | timestamp | Data de criação |
 
 ---
 
@@ -320,7 +368,17 @@ alert_resolve (N) ↔ (N) error_type  [via alert_resolve_error_type]
   JOIN: alert_resolve_error_type art
         ON art.alert_resolve_id = alert_resolve.id
         AND art.error_type_id = error_type.id
-  Para: listar erros associados a cada resolução de alerta
+  Para: listar erros de alertas INCONSISTENCY/REJECTED
+  ⚠️ NÃO retorna nada para alertas PROCESSED (ver order_snapshot_item_issue)
+
+order_snapshot (N) ──→ (1) purchase_order
+  JOIN: order_snapshot.purchase_order_id = purchase_order.id
+  Para: localizar o snapshot de um pedido PROCESSED
+  (mesmo purchase_order_id de alert_resolve)
+
+order_snapshot (1) ──→ (N) order_snapshot_item_issue
+  JOIN: order_snapshot_item_issue.order_snapshot_id = order_snapshot.id
+  Para: obter os tipos de erro (alert_name) de pedidos PROCESSED
 
 customer (N) ──→ (1) city  [nullable]
   JOIN: customer.city_id = city.id
@@ -340,8 +398,9 @@ customer (N) ──→ (1) city  [nullable]
 | Cliente | `customer.name` · `.channel` · `.state` · `.regional` · `.cnpj` |
 | Status do pedido | `purchase_order.status::text` |
 | Status do item | `order_item.status::text` |
-| Status da resolução | `alert_resolve.status::text` |
-| Motivo do erro | `error_type.name::text` |
+| Status do alerta (`alert_resolve`) | `purchase_order.status::text` via JOIN em `purchase_order_id` — `INCONSISTENCY` (pendente) · `REJECTED` · `PROCESSED` |
+| Motivo do erro (INCONSISTENCY/REJECTED) | `error_type.name::text` via `alert_resolve_error_type` |
+| Motivo do erro (PROCESSED) | `order_snapshot_item_issue.alert_name` via `order_snapshot` |
 | Tem erro ou não | `order_item.error_type_id IS NOT NULL` |
 | Produto | `product.part_number` · `.market_name` · `.product_group` · `.ram` · `.rom` |
 | Família de produto | `order_item.product_group` (como consta no pedido) |

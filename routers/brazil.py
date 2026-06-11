@@ -276,20 +276,22 @@ def orders_summary(
         tc_select = "c.cnpj AS customer_cnpj, c.name AS customer,"
         tc_group  = "c.cnpj, c.name"
     else:
-        tc_select = "c.name AS customer,"
-        tc_group  = "c.name"
+        # Agrupa pela raiz do CNPJ (8 primeiros dígitos) — mesma empresa pode
+        # ter filiais com CNPJs diferentes e pequenas variações de nome.
+        # Usa o nome do primeiro cliente (por id) do grupo como rótulo.
+        tc_select = "(array_agg(c.name ORDER BY c.id))[1] AS customer,"
+        tc_group  = "LEFT(c.cnpj, 8)"
 
     top_customers = posh_query(
         f"""
         SELECT
             {tc_select}
-            COUNT(DISTINCT po.id) FILTER (WHERE po.status::text != 'REJECTED') AS total_orders,
+            COUNT(DISTINCT po.id) AS total_orders,
             COALESCE(SUM(oi.quantity)           FILTER (WHERE po.status::text != 'REJECTED'), 0) AS total_items,
             ROUND(COALESCE(SUM(oi.value_price_total) FILTER (WHERE po.status::text != 'REJECTED'), 0)::numeric, 2) AS total_value,
-            COUNT(DISTINCT po.id) FILTER (WHERE po.status::text = 'APPROVED')      AS cnt_approved,
+            COUNT(DISTINCT po.id) FILTER (WHERE po.status::text = 'PROCESSED')     AS cnt_processed,
             COUNT(DISTINCT po.id) FILTER (WHERE po.status::text = 'INCONSISTENCY') AS cnt_inconsistency,
-            COUNT(DISTINCT po.id) FILTER (WHERE po.status::text = 'REJECTED')      AS cnt_rejected,
-            COUNT(DISTINCT po.id) FILTER (WHERE po.status::text = 'PENDING')       AS cnt_pending
+            COUNT(DISTINCT po.id) FILTER (WHERE po.status::text = 'REJECTED')      AS cnt_rejected
         FROM brazil.purchase_order po
         JOIN brazil.customer c ON c.id = po.customer_id
         LEFT JOIN brazil.order_item oi ON oi.purchase_order_id = po.id
@@ -373,6 +375,7 @@ def order_items_summary(
         SELECT
             p.part_number,
             p.market_name,
+            (array_agg(oi.local_market_name) FILTER (WHERE oi.local_market_name IS NOT NULL))[1] AS local_market_name,
             p.product_group,
             COUNT(oi.id) AS times_ordered,
             COALESCE(SUM(oi.quantity), 0) AS total_qty
@@ -382,7 +385,6 @@ def order_items_summary(
         WHERE oi.product_id IS NOT NULL {date_clause}
         GROUP BY p.id, p.part_number, p.market_name, p.product_group
         ORDER BY total_qty DESC
-        LIMIT 10
         """,
         params,
     )
@@ -575,29 +577,50 @@ def alert_resolves_by_status(
     from_date: Optional[str] = Query(default=None, alias="from"),
     to_date: Optional[str] = Query(default=None, alias="to"),
 ):
-    """Contagem de alertas resolvidos (resolved_at IS NOT NULL) agrupados por tipo de erro."""
+    """
+    Contagem de alertas por tipo de erro, agrupados por status do pedido:
+    - Inconsistência / Rejeitado: vêm de alert_resolve (alertas ainda não resolvidos
+      ou que geraram rejeição; alertas efetivamente resolvidos são removidos da tabela)
+    - Processado: vêm de order_snapshot_item_issue (alert_name já é o nome do tipo)
+    """
     date_clause = ""
     params: list = []
     if from_date:
-        date_clause += " AND ar.resolved_at >= %s"
+        date_clause += " AND po.created_at >= %s"
         params.append(from_date)
     if to_date:
-        date_clause += " AND ar.resolved_at <= %s"
+        date_clause += " AND po.created_at <= %s"
         params.append(to_date + " 23:59:59")
 
     return posh_query(
         f"""
         SELECT
-            COALESCE(et.name::text, 'Sem tipo') AS status,
+            CASE po.status::text
+                WHEN 'INCONSISTENCY' THEN 'Inconsistência'
+                WHEN 'REJECTED'      THEN 'Rejeitado'
+            END AS category,
+            COALESCE(et.name::text, 'Sem tipo') AS error_type,
             COUNT(*) AS total
         FROM brazil.alert_resolve ar
+        JOIN brazil.purchase_order po ON po.id = ar.purchase_order_id
         LEFT JOIN brazil.alert_resolve_error_type aret ON aret.alert_resolve_id = ar.id
         LEFT JOIN brazil.error_type et ON et.id = aret.error_type_id
-        WHERE ar.resolved_at IS NOT NULL {date_clause}
-        GROUP BY et.name
-        ORDER BY total DESC
+        WHERE po.status::text IN ('INCONSISTENCY', 'REJECTED') {date_clause}
+        GROUP BY 1, 2
+
+        UNION ALL
+
+        SELECT
+            'Processado' AS category,
+            i.alert_name AS error_type,
+            COUNT(*) AS total
+        FROM brazil.order_snapshot_item_issue i
+        JOIN brazil.order_snapshot os ON os.id = i.order_snapshot_id
+        JOIN brazil.purchase_order po ON po.id = os.purchase_order_id
+        WHERE po.status::text = 'PROCESSED' {date_clause}
+        GROUP BY 1, 2
         """,
-        params,
+        params + params,
     )
 
 
@@ -620,10 +643,10 @@ def alert_resolves_by_dim(
     date_clause = ""
     params: list = []
     if from_date:
-        date_clause += " AND ar.resolved_at >= %s"
+        date_clause += " AND po.created_at >= %s"
         params.append(from_date)
     if to_date:
-        date_clause += " AND ar.resolved_at <= %s"
+        date_clause += " AND po.created_at <= %s"
         params.append(to_date + " 23:59:59")
 
     if group_by == "name":
@@ -666,8 +689,27 @@ def alert_resolves_by_dim(
             {join_city}
             LEFT JOIN brazil.alert_resolve_error_type aret ON aret.alert_resolve_id = ar.id
             LEFT JOIN brazil.error_type et ON et.id = aret.error_type_id
-            WHERE ar.resolved_at IS NOT NULL {date_clause}
+            WHERE po.status::text IN ('INCONSISTENCY', 'REJECTED') {date_clause}
             GROUP BY {group_expr}, et.name
+
+            UNION ALL
+
+            -- Pedidos PROCESSED: o tipo de erro original foi removido de
+            -- alert_resolve_error_type e movido para order_snapshot_item_issue
+            -- (campo alert_name já é o nome do tipo, sem necessidade de mapeamento)
+            SELECT
+                {label_select} AS label,
+                {second_select}::text AS secondary,
+                i.alert_name AS error_type,
+                COUNT(*) AS cnt
+            FROM brazil.alert_resolve ar
+            JOIN brazil.purchase_order po ON po.id = ar.purchase_order_id
+            JOIN brazil.customer c ON c.id = po.customer_id
+            {join_city}
+            JOIN brazil.order_snapshot os ON os.purchase_order_id = ar.purchase_order_id
+            JOIN brazil.order_snapshot_item_issue i ON i.order_snapshot_id = os.id
+            WHERE po.status::text = 'PROCESSED' {date_clause}
+            GROUP BY {group_expr}, i.alert_name
         ),
         ranked AS (
             SELECT label, secondary,
@@ -676,14 +718,15 @@ def alert_resolves_by_dim(
             FROM base
             GROUP BY label, secondary
         )
-        SELECT b.label, b.secondary, b.error_type, b.cnt
+        SELECT b.label, b.secondary, b.error_type, SUM(b.cnt) AS cnt
         FROM base b
         JOIN ranked r ON r.label IS NOT DISTINCT FROM b.label
                      AND r.secondary IS NOT DISTINCT FROM b.secondary
         WHERE r.rn <= 20
+        GROUP BY b.label, b.secondary, b.error_type, r.label_total
         ORDER BY r.label_total DESC, b.label, b.error_type
         """,
-        params,
+        params + params,
     )
 
 
