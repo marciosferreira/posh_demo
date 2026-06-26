@@ -230,8 +230,11 @@ def schedule_monitor(
                             "!=" — executa se valor != threshold
                             "is_empty"     — executa se a query não retornar linhas
                             "is_not_empty" — executa se a query retornar ao menos 1 linha
+                            "on_change"    — executa quando o valor retornado mudar em relação
+                                            ao último valor registrado (last_value). Na primeira
+                                            execução apenas establece o baseline sem alertar.
         condition_threshold: Valor numérico de referência. Obrigatório para operadores
-                             numéricos (>, >=, <, <=, ==, !=). Ignorado para is_empty/is_not_empty.
+                             numéricos (>, >=, <, <=, ==, !=). Ignorado para is_empty/is_not_empty/on_change.
         date_range: Período injetado como from_date/to_date no task_code.
                     "today" (padrão para monitores) | "ytd" | "mtd" | "last_7d" | "last_30d"
         time: Hora "HH:MM" (opcional).
@@ -242,13 +245,14 @@ def schedule_monitor(
     if err:
         return err
 
-    if condition_operator not in (">", ">=", "<", "<=", "==", "!=", "is_empty", "is_not_empty"):
-        return f"❌ condition_operator inválido: '{condition_operator}'. Use: > >= < <= == != is_empty is_not_empty"
+    if condition_operator not in (">", ">=", "<", "<=", "==", "!=", "is_empty", "is_not_empty", "on_change"):
+        return f"❌ condition_operator inválido: '{condition_operator}'. Use: > >= < <= == != is_empty is_not_empty on_change"
 
-    if condition_operator not in ("is_empty", "is_not_empty") and condition_threshold is None:
+    if condition_operator not in ("is_empty", "is_not_empty", "on_change") and condition_threshold is None:
         return f"❌ condition_threshold obrigatório para operador '{condition_operator}'."
 
-    # Valida condition_sql executando antes de salvar
+    # Valida condition_sql executando antes de salvar; captura valor inicial para on_change
+    initial_last_value: str | None = None
     try:
         import os, psycopg2
         _conn = psycopg2.connect(
@@ -261,14 +265,17 @@ def schedule_monitor(
         )
         with _conn.cursor() as cur:
             cur.execute(condition_sql)
-            cur.fetchone()
+            row = cur.fetchone()
+            if condition_operator == "on_change" and row:
+                initial_last_value = str(row[0]) if row[0] is not None else ""
         _conn.close()
     except Exception as exc:
         return (
             f"❌ **condition_sql inválido:** a query falhou com o erro abaixo.\n"
             f"Corrija antes de criar o monitor.\n\n"
             f"Erro: `{exc}`\n\n"
-            f"Dica: tabelas disponíveis são `purchase_order`, `order_item`, `customer`, `product`."
+            f"Dica: tabelas disponíveis são `purchase_order`, `order_item`, `customer`, `product`, `alert_resolve`.\n"
+            f"Para alertas pendentes use: SELECT COUNT(*) FROM alert_resolve WHERE resolved_at IS NULL"
         )
 
     effective_date_range = date_range or "today"
@@ -295,11 +302,11 @@ def schedule_monitor(
                 """INSERT INTO scheduled_tasks
                    (id, name, description, task_code, frequency, time, weekday, day,
                     notify, date_range, condition_sql, condition_operator, condition_threshold,
-                    status, next_run, last_run, created_at, user_id)
-                   VALUES (?,?,?,?,?,?,?,?,1,?,?,?,?,'active',?,NULL,?,?)""",
+                    last_value, status, next_run, last_run, created_at, user_id)
+                   VALUES (?,?,?,?,?,?,?,?,1,?,?,?,?,?,'active',?,NULL,?,?)""",
                 (task_id, name, description, default_code, frequency, time, weekday, day,
                  effective_date_range, condition_sql, condition_operator, condition_threshold,
-                 next_run, now, user_id),
+                 initial_last_value, next_run, now, user_id),
             )
             conn.commit()
     except Exception as exc:
@@ -310,6 +317,7 @@ def schedule_monitor(
     op_desc = (
         f"executa se sem resultados" if condition_operator == "is_empty" else
         f"executa se houver resultados" if condition_operator == "is_not_empty" else
+        f"alerta quando o valor mudar (baseline atual: {initial_last_value})" if condition_operator == "on_change" else
         f"executa se valor {condition_operator} {condition_threshold}"
     )
     return (

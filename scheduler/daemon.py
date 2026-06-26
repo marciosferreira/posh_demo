@@ -137,10 +137,12 @@ def _finish_run(run_id: int, status: str, output: str = None, error: str = None)
         conn.commit()
 
 
-def _evaluate_condition(task: dict) -> tuple[bool, str]:
+def _evaluate_condition(task: dict) -> tuple[bool, str, str | None]:
     """Avalia condition_sql antes de executar a tarefa.
 
-    Retorna (should_run, detail) onde detail é incluído na notificação automática.
+    Retorna (should_run, detail, new_last_value) onde:
+    - detail é incluído na notificação automática.
+    - new_last_value é o valor atual a persistir em last_value (apenas para on_change, None nos demais).
     """
     import os
     import psycopg2
@@ -167,27 +169,42 @@ def _evaluate_condition(task: dict) -> tuple[bool, str]:
             conn.close()
     except Exception as exc:
         logger.warning("[daemon] Erro ao avaliar condition_sql da task %s: %s", task.get("id"), exc)
-        return False, f"erro na condição: {exc}"
+        return False, f"erro na condição: {exc}", None
 
     if operator == "is_empty":
         met = len(rows) == 0
         detail = "sem registros" if met else f"{len(rows)} registro(s) — condição não atingida"
-        return met, detail
+        return met, detail, None
 
     if operator == "is_not_empty":
         met = len(rows) > 0
         detail = f"{len(rows)} registro(s)" if met else "sem registros — condição não atingida"
-        return met, detail
+        return met, detail, None
+
+    # on_change — compara valor atual com last_value salvo no banco
+    if operator == "on_change":
+        if not rows:
+            return False, "sem dados", None
+        raw = list(dict(rows[0]).values())[0]
+        current_str = str(raw) if raw is not None else ""
+        last_str = task.get("last_value")
+        if last_str is None:
+            # Primeira execução: estabelece baseline sem alertar
+            logger.info("[daemon] Task %s on_change — baseline inicial: %s", task.get("id"), current_str)
+            return False, f"baseline: {current_str}", current_str
+        if current_str != last_str:
+            return True, f"mudou: {last_str} → {current_str}", current_str
+        return False, f"sem mudança: {current_str}", None
 
     # Operadores numéricos — usa o primeiro valor da primeira linha
     if not rows:
-        return False, "sem dados"
+        return False, "sem dados", None
 
     first_val = list(dict(rows[0]).values())[0]
     try:
         value = float(first_val)
     except (TypeError, ValueError):
-        return False, f"valor não numérico: {first_val}"
+        return False, f"valor não numérico: {first_val}", None
 
     th = float(threshold) if threshold is not None else 0.0
     met = {">": value > th, "<": value < th, ">=": value >= th,
@@ -196,7 +213,7 @@ def _evaluate_condition(task: dict) -> tuple[bool, str]:
     val_fmt = int(value) if value == int(value) else round(value, 2)
     th_fmt  = int(th)    if th    == int(th)    else round(th, 2)
     detail  = f"{val_fmt} {operator} {th_fmt}"
-    return met, detail
+    return met, detail, None
 
 
 def _execute_task(task: dict, manual: bool = False) -> None:
@@ -206,22 +223,31 @@ def _execute_task(task: dict, manual: bool = False) -> None:
 
     # ── 0. Avalia condição (se definida) — sem criar run record se não atingida
     condition_detail = ""
+    _pending_last_value: str | None = None  # novo last_value a persistir após sucesso (on_change)
     if task.get("condition_sql"):
-        should_run, condition_detail = _evaluate_condition(task)
+        should_run, condition_detail, _pending_last_value = _evaluate_condition(task)
         next_run = calculate_next_run(task.get('frequency', 'daily'), task.get('time'), task.get('weekday'), task.get('day'))
 
         if not should_run:
             logger.info("[daemon] Task %s '%s' — condição não atingida: %s", task_id, task.get('name'), condition_detail)
             with get_db() as conn:
-                conn.execute(
-                    "UPDATE scheduled_tasks SET next_run=?, condition_state=0 WHERE id=?",
-                    (next_run, task_id),
-                )
+                if _pending_last_value is not None:
+                    # on_change — persiste baseline sem alertar
+                    conn.execute(
+                        "UPDATE scheduled_tasks SET next_run=?, condition_state=0, last_value=? WHERE id=?",
+                        (next_run, _pending_last_value, task_id),
+                    )
+                else:
+                    conn.execute(
+                        "UPDATE scheduled_tasks SET next_run=?, condition_state=0 WHERE id=?",
+                        (next_run, task_id),
+                    )
                 conn.commit()
             return
 
+        is_on_change = task.get("condition_operator") == "on_change"
         last_state = int(task.get("condition_state") or 0)
-        if last_state == 1 and not manual:
+        if last_state == 1 and not manual and not is_on_change:
             # Daemon: condição ainda ativa, já notificou — aguarda reset
             logger.info("[daemon] Task %s '%s' — condição ativa, aguardando reset", task_id, task.get('name'))
             with get_db() as conn:
@@ -308,13 +334,24 @@ def _execute_task(task: dict, manual: bool = False) -> None:
                 task.get('weekday'),
                 task.get('day'),
             )
-            # Se havia condição, marca estado como ativo (1) para evitar re-notificação
-            new_cond_state = 1 if task.get("condition_sql") else int(task.get("condition_state") or 0)
+            # Se havia condição, marca estado como ativo (1) para evitar re-notificação.
+            # on_change não usa condition_state=1 — o last_value atualizado cumpre esse papel.
+            is_on_change = task.get("condition_operator") == "on_change"
+            if task.get("condition_sql") and not is_on_change:
+                new_cond_state = 1
+            else:
+                new_cond_state = int(task.get("condition_state") or 0)
             with get_db() as conn:
-                conn.execute(
-                    "UPDATE scheduled_tasks SET last_run=?, next_run=?, status='active', retry_count=0, condition_state=? WHERE id=?",
-                    (last_run, next_run, new_cond_state, task_id),
-                )
+                if _pending_last_value is not None:
+                    conn.execute(
+                        "UPDATE scheduled_tasks SET last_run=?, next_run=?, status='active', retry_count=0, condition_state=?, last_value=? WHERE id=?",
+                        (last_run, next_run, new_cond_state, _pending_last_value, task_id),
+                    )
+                else:
+                    conn.execute(
+                        "UPDATE scheduled_tasks SET last_run=?, next_run=?, status='active', retry_count=0, condition_state=? WHERE id=?",
+                        (last_run, next_run, new_cond_state, task_id),
+                    )
                 conn.commit()
 
     except concurrent.futures.TimeoutError:

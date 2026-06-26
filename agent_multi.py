@@ -34,7 +34,7 @@ from pathlib import Path
 from typing import Optional
 
 import requests as http_requests
-from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
 from langgraph.graph import END, START, StateGraph
@@ -43,6 +43,7 @@ from langgraph.prebuilt import ToolNode
 from typing_extensions import Annotated, TypedDict
 
 import chart_store
+from ui_events import push_ui_event
 from scheduler.tools import (
     schedule_task,
     schedule_monitor,
@@ -341,6 +342,11 @@ _CHART_TOKEN_RE = _re.compile(r'\[chart:([a-f0-9\-]{36})\]')
 
 def _safe(text: str) -> str:
     """Converte para latin-1 para compatibilidade com fontes core do fpdf2."""
+    text = text.replace("—", "-").replace("–", "-")   # em/en dash
+    text = text.replace("‘", "'").replace("’", "'")   # smart quotes
+    text = text.replace("“", '"').replace("”", '"')
+    text = text.replace("•", "-")                          # bullet
+    text = text.replace("…", "...")                         # ellipsis
     return text.encode("latin-1", errors="replace").decode("latin-1")
 
 
@@ -377,14 +383,13 @@ def _pdf_render_table(pdf, rows: list[list[str]]) -> None:
 
 def _pdf_safe_multicell(pdf, h: float, text: str) -> None:
     """Chama multi_cell garantindo que x está no l_margin e quebrando palavras longas."""
+    text = _safe(text)
     pdf.set_x(pdf.l_margin)
-    # Quebra palavras sem espaço que ultrapassem a largura disponível
     available = pdf.w - pdf.l_margin - pdf.r_margin
     words = text.split(" ")
     safe_words = []
     for w in words:
         if pdf.get_string_width(w) > available - 2:
-            # Quebra o token longo em pedaços que caibam
             chunk, buf = "", ""
             for ch in w:
                 if pdf.get_string_width(buf + ch) > available - 2:
@@ -396,7 +401,7 @@ def _pdf_safe_multicell(pdf, h: float, text: str) -> None:
                 safe_words.append(buf)
         else:
             safe_words.append(w)
-    pdf.multi_cell(0, h, _safe(" ".join(safe_words)))
+    pdf.multi_cell(0, h, " ".join(safe_words))
 
 
 def _pdf_render_text(pdf, text: str) -> None:
@@ -488,13 +493,14 @@ def _build_pdf(titulo: str, conteudo: str, session_id: str) -> str:
                         pdf.add_page()
                     pdf.image(io.BytesIO(img_bytes), x=10, w=190)
                     pdf.ln(3)
-    except Exception:
-        # Fallback: página limpa com mensagem de erro de layout
+    except Exception as exc:
+        logger.error("Erro ao renderizar PDF '%s': %s\n%s", titulo, exc, tb.format_exc())
         pdf.add_page()
         pdf.set_font("Helvetica", "", 10)
         pdf.set_text_color(148, 163, 184)
         pdf.set_x(pdf.l_margin)
-        pdf.multi_cell(0, 6, _safe("Erro ao renderizar conteudo formatado. Verifique o conteudo gerado."))
+        err_detail = _safe(f"Erro ao renderizar conteudo: {type(exc).__name__}: {exc}")
+        pdf.multi_cell(0, 6, err_detail)
 
     pdf_bytes = bytes(pdf.output())
     safe_name = _re.sub(r'[^\w\- ]', '', titulo)[:40].strip().replace(" ", "_")
@@ -728,6 +734,10 @@ def get_dashboard_charts() -> str:
     ou usar expressões como 'no dashboard', 'na tela', 'o que está aparecendo',
     'o gráfico mostra', 'os KPIs', 'os alertas ativos'.
     NÃO use para análises que exijam buscar dados históricos — use consultar_analista nesses casos.
+
+    Após obter os dados, se fizer sentido destacar visualmente um elemento para o usuário
+    (ex: responder onde está um gráfico específico, apontar o KPI mencionado, confirmar qual
+    painel contém determinada informação), chame highlight_element() com o element_id retornado.
     """
     session = _current_session.get()
     with _cs_lock:
@@ -743,7 +753,8 @@ def get_dashboard_charts() -> str:
         lines.append("=== KPIs ===")
         for k in kpis:
             badge = f" [{k.get('badge', '')}]" if k.get("badge") else ""
-            lines.append(f"  {k['label']}: {k['value']}{badge}")
+            eid = f" [element_id={k['element_id']}]" if k.get("element_id") else ""
+            lines.append(f"  {k['label']}: {k['value']}{badge}{eid}")
         lines.append("")
 
     charts = snapshot.get("charts", {})
@@ -751,7 +762,7 @@ def get_dashboard_charts() -> str:
         title = chart.get("title", chart_id)
         labels = chart.get("labels", [])
         datasets = chart.get("datasets", [])
-        lines.append(f"=== {title} ===")
+        lines.append(f"=== {title} [element_id={chart_id}] ===")
         if labels:
             lines.append(f"  Labels: {', '.join(str(l) for l in labels)}")
         for ds in datasets:
@@ -793,6 +804,40 @@ def get_dashboard_charts() -> str:
 
     _tlog("get_dashboard_charts", "RETORNO", linhas=len(lines))
     return "\n".join(lines) if lines else "Dashboard sem dados disponíveis."
+
+
+@tool
+def highlight_element(element_id: str, label: str = "", overlay_html: str = "") -> str:
+    """Destaca visualmente um elemento do dashboard na tela do usuário em tempo real, sem refresh.
+
+    Normalmente chamada logo após get_dashboard_charts(), quando o usuário pergunta onde está
+    um gráfico ou KPI específico, ou quando é útil apontar visualmente o elemento que está
+    sendo discutido na resposta. O highlight aparece instantaneamente via SSE, sem recarregar a página.
+
+    Os element_ids válidos vêm do retorno de get_dashboard_charts():
+    - Gráficos: chaves do dict 'charts' (ex: 'ordersMonthChart', 'wcanvas-<uuid>')
+    - KPIs: campo 'element_id' em cada item da lista 'kpis' (ex: 'kpi-eficiencia')
+
+    Args:
+        element_id: ID do elemento no DOM obtido via get_dashboard_charts().
+        label: Texto curto exibido junto ao highlight padrão (borda amarela animada).
+               Ignorado se overlay_html for fornecido.
+        overlay_html: HTML com estilos inline para substituir o highlight padrão. É injetado
+            em um container position:fixed já posicionado sobre o elemento, com overflow:visible.
+            Use para criar setas, emojis animados, bordas coloridas ou qualquer efeito visual.
+            Deixe vazio para usar a borda amarela padrão.
+    """
+    session = _current_session.get()
+    success = push_ui_event(session, {
+        "type": "highlight",
+        "element_id": element_id,
+        "label": label,
+        "overlay_html": overlay_html,
+    })
+    _tlog("highlight_element", "RETORNO", element_id=element_id, enviado=success, custom=bool(overlay_html))
+    if success:
+        return f"Elemento '{element_id}' destacado na tela do usuário."
+    return f"Usuário não está com o stream de UI ativo — highlight não enviado para '{element_id}'."
 
 
 # ── Tools do sub-agente ───────────────────────────────────────────────────────
@@ -1677,15 +1722,30 @@ def _build_scheduling_graph(llm):
             '  "time": "HH:MM ou null",\n'
             '  "date_range": "ytd|mtd|today|last_7d|last_30d|last_90d ou null",\n'
             '  "condition_sql": "query SELECT PostgreSQL para monitors (schema brazil, sem prefixo) ou null",\n'
-            '  "condition_operator": ">= | > | <= | < | == | != | is_empty | is_not_empty ou null",\n'
+            '  "condition_operator": ">= | > | <= | < | == | != | is_empty | is_not_empty | on_change ou null",\n'
             '  "condition_threshold": "número ou null"\n'
             '}\n\n'
             "REGRAS:\n"
-            "- task_type=monitor se o pedido menciona: alerte/avise/notifique/monitore/caso X>N/threshold\n"
+            "- task_type=monitor se o pedido menciona: alerte/avise/notifique/monitore/caso X>N/threshold/mude/altere\n"
             "- task_type=report para relatórios, gráficos, planilhas recorrentes\n"
             "- monitor: frequency=every_5m por padrão, time=null; preencha condition_sql/operator/threshold\n"
             "- condition_sql deve usar CURRENT_DATE para 'hoje', CURRENT_DATE-N para períodos\n"
-            "- tabelas disponíveis: purchase_order, order_item, customer, product (NÃO use 'orders')\n"
+            "- tabelas disponíveis: purchase_order, order_item, customer, product, alert_resolve (NÃO use 'orders')\n"
+            "- coluna de data dos pedidos: purchase_order.created_at (NUNCA use order_date, date ou import_date)\n"
+            "  'pedidos de hoje' → WHERE created_at::date = CURRENT_DATE\n"
+            "- alert_resolve: cada linha é um alerta de inconsistência. resolved_at NULL = pendente, NOT NULL = resolvido.\n"
+            "  'alertas pendentes' → SELECT COUNT(*) FROM alert_resolve WHERE resolved_at IS NULL\n"
+            "\n"
+            "COMO ESCOLHER O OPERADOR DO MONITOR:\n"
+            "- on_change → pedido fala em MUDANÇA, sem citar número: 'caso mude', 'quando mudar', 'se alterar',\n"
+            "  'mudança no número', 'número de X mude', 'caso o valor mude'. condition_threshold=null.\n"
+            "  Exemplo: 'me alerte se o número de alertas pendentes mudar' → on_change\n"
+            "- > >= < <= == != → pedido compara com um NÚMERO FIXO: 'se passar de N', 'caso fique abaixo de N',\n"
+            "  'quando atingir N', 'se X > N'. condition_threshold=N obrigatório.\n"
+            "  Exemplo: 'me alerte se pedidos do dia passarem de 200' → >=, threshold=200\n"
+            "- is_not_empty → pedido quer saber SE HÁ registros, sem número: 'se houver', 'caso exista algum'.\n"
+            "- is_empty → pedido quer saber SE NÃO HÁ registros: 'se não houver nenhum', 'caso esteja vazio'.\n"
+            "\n"
             "- date_range: preencha quando o pedido especifica período (ano atual→ytd, mês→mtd)\n"
             "- weekly → weekday obrigatório. monthly → day obrigatório.\n"
         )
@@ -2359,7 +2419,7 @@ def _build_orchestrator(llm, checkpointer=None):
     )
 
     orq_tools = [
-        get_current_datetime, get_dashboard_charts, calcular_periodo, consultar_analista,
+        get_current_datetime, get_dashboard_charts, highlight_element, calcular_periodo, consultar_analista,
         ver_grafico,
         rag_dominio, rag_capacidades, rag_arquitetura, rag_dados,
         gerar_pdf, gerar_excel,
@@ -2373,9 +2433,28 @@ def _build_orchestrator(llm, checkpointer=None):
     llm_orq = llm.bind_tools(orq_tools)
     no_orq_tools = ToolNode(orq_tools)
 
+    def _sanitize_msgs(msgs: list) -> list:
+        """Garante que nenhuma AIMessage tenha conteúdo de texto vazio com tool_calls.
+        O Gemini lança IndexError em _parse_chat_history_gemini nesses casos."""
+        out = []
+        for msg in msgs:
+            if isinstance(msg, AIMessage) and msg.tool_calls:
+                text = msg.content if isinstance(msg.content, str) else (
+                    " ".join(p.get("text", "") for p in msg.content if isinstance(p, dict) and p.get("type") == "text")
+                    if isinstance(msg.content, list) else ""
+                )
+                if not text.strip():
+                    msg = AIMessage(
+                        content="Consultando informações...",
+                        tool_calls=msg.tool_calls,
+                        id=msg.id,
+                    )
+            out.append(msg)
+        return out
+
     def no_orquestrador(state: State) -> dict:
         historico_recente = state["messages"][-(MAX_INTERACOES * 2):]
-        msgs = [SystemMessage(content=ORQ_SYSTEM_PROMPT)] + historico_recente
+        msgs = _sanitize_msgs([SystemMessage(content=ORQ_SYSTEM_PROMPT)] + historico_recente)
         return {"messages": [llm_orq.invoke(msgs)]}
 
     def orq_para_onde(state: State) -> str:

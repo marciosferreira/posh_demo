@@ -1,0 +1,14 @@
+{
+  "task_id": "040",
+  "task_name": "Monitor Alertas Pendentes",
+  "run_at": "2026-06-18T15:56:26.171546",
+  "status": "pending_send",
+  "pdf_urls": [],
+  "email": null,
+  "schedule": {
+    "frequency": "every_5m",
+    "weekday": null,
+    "day": null,
+    "time": null
+  }
+}

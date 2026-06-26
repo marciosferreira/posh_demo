@@ -1,4 +1,4 @@
-# Arquitetura Agêntica — MFG Control AI
+# Arquitetura Agêntica — POSH IA Dashboard AI
 
 ---
 

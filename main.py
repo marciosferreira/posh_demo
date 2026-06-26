@@ -1,5 +1,5 @@
 """
-MFG Control — Backend FastAPI
+POSH IA Dashboard — Backend FastAPI
 ==============================
 Rodar:
     python -m uvicorn main:app --reload
@@ -38,6 +38,7 @@ from sse_starlette.sse import EventSourceResponse
 from agent_multi import init_multi_agent, invoke_multi_agent, is_multi_agent_ready, stream_multi_agent, set_chart_snapshot, ns_cleanup_loop
 from scheduler.daemon import scheduler_loop, _execute_task
 import chart_store as cs
+from ui_events import register_ui_queue, unregister_ui_queue
 
 _CHART_RE = re.compile(r'\[chart:([a-f0-9\-]{36})\]')
 _PDF_RE   = re.compile(r'\[pdf:([a-f0-9\-]{36})\]')
@@ -117,7 +118,7 @@ def _init_vertex():
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="MFG Control API", version="4.0.0")
+app = FastAPI(title="POSH IA Dashboard API", version="4.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -240,6 +241,31 @@ async def chart_snapshot(req: ChartSnapshotRequest):
     """Recebe o snapshot atual dos gráficos do dashboard e armazena por session_id."""
     set_chart_snapshot(req.session_id, req.snapshot)
     return {"ok": True}
+
+
+@app.get("/ui/stream")
+async def ui_stream(request: Request, session_id: str = "default"):
+    """SSE — recebe comandos de UI do agente (highlight, scroll) em tempo real."""
+    loop = asyncio.get_running_loop()
+    queue: asyncio.Queue = asyncio.Queue()
+    register_ui_queue(session_id, queue, loop)
+
+    async def generate():
+        # Confirma a conexão imediatamente
+        yield {"data": json.dumps({"type": "connected", "session_id": session_id})}
+        try:
+            while True:
+                if await request.is_disconnected():
+                    break
+                try:
+                    event = await asyncio.wait_for(queue.get(), timeout=20.0)
+                    yield {"data": json.dumps(event)}
+                except asyncio.TimeoutError:
+                    yield {"data": json.dumps({"type": "ping"})}
+        finally:
+            unregister_ui_queue(session_id)
+
+    return EventSourceResponse(generate())
 
 
 @app.post("/chat")
@@ -496,14 +522,14 @@ def get_tasks(user_id: str = Query(default=None)):
         if user_id:
             tasks = conn.execute(
                 "SELECT id, name, description, frequency, time, weekday, day, email, notify, "
-                "date_range, condition_sql, condition_operator, condition_threshold, condition_state, "
+                "date_range, condition_sql, condition_operator, condition_threshold, condition_state, last_value, "
                 "status, next_run, last_run, created_at, retry_count, max_retries "
                 "FROM scheduled_tasks WHERE user_id=? ORDER BY id DESC", (user_id,)
             ).fetchall()
         else:
             tasks = conn.execute(
                 "SELECT id, name, description, frequency, time, weekday, day, email, notify, "
-                "date_range, condition_sql, condition_operator, condition_threshold, condition_state, "
+                "date_range, condition_sql, condition_operator, condition_threshold, condition_state, last_value, "
                 "status, next_run, last_run, created_at, retry_count, max_retries "
                 "FROM scheduled_tasks ORDER BY id DESC"
             ).fetchall()

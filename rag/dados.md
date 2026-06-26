@@ -134,6 +134,7 @@ Representa uma tentativa de resolver as inconsistências de um pedido. Criada qu
 | customer_id | integer | Cliente do pedido (→ customer) |
 | file_import_id | integer | Arquivo de origem (→ file_import) |
 | status | enum | Resultado da tentativa de resolução: `PROCESSED` (resolvido com sucesso), `REJECTED` (resolução rejeitada), `INCONSISTENCY` (ainda inconsistente) |
+| resolved_at | timestamp | Quando o alerta foi resolvido. **NULL = pendente (ainda não resolvido)**. Não NULL = já resolvido. |
 | created_at | timestamp | Quando a resolução foi registrada |
 | notify_reject_date | timestamp | Quando o cliente foi notificado da rejeição |
 

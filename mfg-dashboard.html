@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<title>MFG Control — Dashboard de Produção</title>
+<title>POSH IA Dashboard — Dashboard de Produção</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
@@ -163,7 +163,7 @@
   .kpi::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--kc); }
   .kpi:hover { transform:translateY(-2px); }
   .kpi-lbl { font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--txt2); font-family:'JetBrains Mono',monospace; margin-bottom:8px; }
-  .kpi-val { font-size:28px; font-weight:700; color:var(--kc); line-height:1; margin-bottom:5px; }
+  .kpi-val { font-size:22px; font-weight:700; color:var(--kc); line-height:1; margin-bottom:5px; }
   .kpi-sub { font-size:11px; color:var(--txt3); font-family:'JetBrains Mono',monospace; }
   .badge { display:inline-block; padding:2px 7px; font-size:10px; font-weight:600; border-radius:2px; }
   .ok { background:rgba(52,211,153,.15); color:var(--green); }
@@ -741,6 +741,40 @@
   .mermaid svg text { text-transform: none !important; font-size: 13px !important; }
   .mermaid svg .label foreignObject { overflow: visible; }
   .mermaid svg .label div { font-size: 13px !important; line-height: 1.4; white-space: nowrap; }
+
+  /* ── AI Highlight (fixed overlay — imune ao overflow:hidden dos cards) ── */
+  @keyframes ai-pulse {
+    0%,100% { box-shadow: 0 0 0 3px #facc15, 0 0 0 3px #facc15; }
+    50%      { box-shadow: 0 0 0 3px #facc15, 0 0 12px 6px rgba(250,204,21,.35); }
+  }
+  .ai-highlight-overlay {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9990;
+    border: 3px solid #facc15;
+    border-radius: 6px;
+    background: rgba(250,204,21,.07);
+    animation: ai-pulse 1s ease-in-out 4;
+  }
+  .ai-highlight-overlay.ai-custom {
+    border: none;
+    background: none;
+    animation: none;
+    overflow: visible;
+  }
+  .ai-highlight-label {
+    position: absolute;
+    top: -30px; left: 50%; transform: translateX(-50%);
+    background: #facc15; color: #1e293b;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: .06em;
+    padding: 3px 10px; border-radius: 3px; white-space: nowrap;
+    pointer-events: none;
+  }
+  .ai-highlight-label::after {
+    content: '';
+    position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+    border: 5px solid transparent; border-top-color: #facc15;
+  }
 </style>
 </head>
 <body>
@@ -771,6 +805,9 @@
   <div class="hdr-r">
     <div class="api-status" id="apiStatus">API —</div>
     <div class="live"><div class="dot" id="liveDot"></div><span id="liveLabel">CONECTANDO</span></div>
+    <div class="live" id="uiStreamStatus" title="Canal de highlight do agente" style="opacity:.5">
+      <div class="dot offline" id="uiStreamDot"></div><span style="font-size:9px">IA-UI</span>
+    </div>
     <div class="clk" id="clk">--:--:--</div>
     <button class="refresh-btn" id="refreshBtn" onclick="refreshAll()">
       <span class="refresh-icon">↺</span> Atualizar
@@ -978,7 +1015,8 @@
 
   <!-- KPI section -->
   <div class="section-bar">
-    <div class="section-lbl">Indicadores — Supply Chain Brazil</div>
+    <div style="display:flex;align-items:center;gap:12px;">
+    <div class="section-lbl">Indicadores do Período</div>
     <div class="card-controls">
       <select class="cf-sel" id="kpiFromSel" onchange="onDateRangeChange()">
         <option value="today">Hoje</option>
@@ -996,6 +1034,7 @@
         <input class="cf-date" type="date" id="customTo">
         <button class="cf-apply" id="customApplyBtn" onclick="applyCustomRange()">Aplicar</button>
       </div>
+    </div>
     </div>
   </div>
   <div class="kpi-row" id="kpiRow"></div>
@@ -2341,6 +2380,7 @@ async function switchSession(sessionId) {
   hideHistory();
   document.getElementById('chatMsgs').innerHTML = '';
   await loadChatHistory();
+  _connectUiStream();
 }
 
 async function deleteSession(sessionId, itemEl) {
@@ -2590,12 +2630,42 @@ async function getChartSnapshot() {
     };
   }
 
+  // Widgets dinâmicos — canvas id = 'wcanvas-<uuid>'
+  for (const [wid, chart] of Object.entries(_widgetCharts || {})) {
+    const canvasId = 'wcanvas-' + wid;
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) continue;
+    const cardTitle = canvas.closest('.card')?.querySelector('.card-title')?.textContent?.trim() ?? canvasId;
+    snapshot.charts[canvasId] = {
+      title: cardTitle,
+      labels: chart.data.labels ?? [],
+      datasets: (chart.data.datasets ?? []).map(ds => ({
+        label: ds.label ?? '',
+        data: ds.data ?? [],
+      })),
+    };
+  }
+
+  // Painéis de lista (não-canvas) — filhos diretos de .card-body com id
+  // ex: topCustomersList, alertDimList, topProductsList
+  document.querySelectorAll('.card-body > [id]').forEach(el => {
+    if (el.tagName === 'CANVAS') return; // já capturado no loop de charts
+    if (snapshot.charts[el.id]) return;  // já existe
+    const card = el.closest('.card');
+    if (!card) return;
+    const title = card.querySelector('.card-title')?.textContent?.trim() ?? el.id;
+    snapshot.charts[el.id] = { title, labels: [], datasets: [] };
+  });
+
   // KPIs do dashboard
-  document.querySelectorAll('#kpiRow .kpi').forEach(el => {
+  document.querySelectorAll('#kpiRow .kpi').forEach((el, i) => {
     const label = el.querySelector('.kpi-lbl')?.textContent?.trim() ?? '';
     const value = el.querySelector('.kpi-val')?.textContent?.trim() ?? '';
     const badge = el.querySelector('.badge')?.textContent?.trim() ?? '';
-    if (label) snapshot.kpis.push({ label, value, badge });
+    // Atribui um data-kpi-id estável baseado no label (slug) para o highlight
+    const kpiId = 'kpi-' + (label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || i);
+    el.dataset.kpiId = kpiId;
+    if (label) snapshot.kpis.push({ label, value, badge, element_id: kpiId });
   });
 
   // Alertas visíveis para este usuário — mesma fonte que o painel de alertas
@@ -3381,11 +3451,17 @@ function renderTaskCard(t, isNew) {
           <div style="font-size:11px;color:#818cf8;font-family:'JetBrains Mono',monospace;">
             ${t.condition_operator === 'is_empty' ? 'executa se sem registros' :
               t.condition_operator === 'is_not_empty' ? 'executa se houver registros' :
+              t.condition_operator === 'on_change' ? 'alerta quando o valor mudar' :
               `executa se valor ${t.condition_operator} ${t.condition_threshold}`}
           </div>
-          <span style="font-size:10px;font-family:'JetBrains Mono',monospace;padding:1px 6px;border-radius:4px;${t.condition_state ? 'background:#fecaca;color:#dc2626;' : 'background:#e2e8f0;color:#475569;'}">
-            ${t.condition_state ? '● ativa' : '○ aguardando'}
-          </span>
+          ${t.condition_operator === 'on_change'
+            ? `<span style="font-size:10px;font-family:'JetBrains Mono',monospace;padding:1px 6px;border-radius:4px;background:#e0f2fe;color:#0369a1;" title="Último valor registrado">
+                ${t.last_value != null ? `◎ último: ${t.last_value}` : '◎ sem baseline'}
+              </span>`
+            : `<span style="font-size:10px;font-family:'JetBrains Mono',monospace;padding:1px 6px;border-radius:4px;${t.condition_state ? 'background:#fecaca;color:#dc2626;' : 'background:#e2e8f0;color:#475569;'}">
+                ${t.condition_state ? '● ativa' : '○ aguardando'}
+              </span>`
+          }
         </div>
       </div>` : ''}
       ${t.email ? `<div style="grid-column:1/-1;">
@@ -4031,11 +4107,172 @@ function closeArtifacts() {
   }, 260);
 }
 
+// ── AI UI Stream (highlight) ──────────────────────────────────────────────────
+
+let _uiEventSource = null;
+let _uiStreamOk = false;
+let _uiHeartbeat = null;
+
+function _setUiStreamStatus(ok) {
+  _uiStreamOk = ok;
+  const dot = document.getElementById('uiStreamDot');
+  const wrap = document.getElementById('uiStreamStatus');
+  if (!dot) return;
+  dot.className = 'dot' + (ok ? '' : ' offline');
+  if (wrap) wrap.style.opacity = ok ? '1' : '.45';
+}
+
+function _connectUiStream() {
+  if (_uiEventSource) { _uiEventSource.close(); _uiEventSource = null; }
+  clearInterval(_uiHeartbeat);
+  _setUiStreamStatus(false);
+
+  const url = `${API_BASE}/ui/stream?session_id=${encodeURIComponent(_sessionId)}`;
+  console.log('[UI-Stream] conectando session_id:', _sessionId);
+  _uiEventSource = new EventSource(url);
+
+  _uiEventSource.onopen = () => {
+    console.log('[UI-Stream] conexão aberta');
+    // status será verde ao receber o evento "connected" do servidor
+  };
+
+  _uiEventSource.onmessage = (e) => {
+    try {
+      const ev = JSON.parse(e.data);
+      if (ev.type === 'connected') {
+        console.log('[UI-Stream] confirmado, session_id servidor:', ev.session_id);
+        _setUiStreamStatus(true);
+      } else if (ev.type === 'ping') {
+        // mantém alive
+      } else if (ev.type === 'highlight') {
+        console.log('[UI-Stream] highlight recebido:', ev.element_id);
+        _applyHighlight(ev.element_id, ev.label || '', ev.overlay_html || '');
+      }
+    } catch (err) {
+      console.error('[UI-Stream] erro ao processar evento:', err, e.data);
+    }
+  };
+
+  _uiEventSource.onerror = () => {
+    console.warn('[UI-Stream] conexão perdida, reconectando em 4s...');
+    _setUiStreamStatus(false);
+    _uiEventSource.close();
+    _uiEventSource = null;
+    setTimeout(_connectUiStream, 4000);
+  };
+
+  // Heartbeat: verifica se o EventSource ainda está OPEN a cada 30s
+  _uiHeartbeat = setInterval(() => {
+    if (!_uiEventSource || _uiEventSource.readyState !== EventSource.OPEN) {
+      console.warn('[UI-Stream] heartbeat: stream não está OPEN, reconectando...');
+      _connectUiStream();
+    }
+  }, 30000);
+}
+
+function _findHighlightTarget(elementId) {
+  const lower = elementId.toLowerCase();
+  // 1. ID exato
+  let el = document.getElementById(elementId);
+  if (el) { console.log('[UI-Stream] elemento encontrado por ID exato:', elementId); return el; }
+  // 2. wcanvas- + ID completo
+  el = document.getElementById('wcanvas-' + elementId);
+  if (el) { console.log('[UI-Stream] elemento encontrado por wcanvas-prefix:', elementId); return el; }
+  // 3. UUID parcial: canvas cujo id começa com wcanvas-<elementId> (agente pode dar UUID truncado)
+  for (const c of document.querySelectorAll('canvas[id^="wcanvas-"]')) {
+    if (c.id.toLowerCase().startsWith('wcanvas-' + lower)) {
+      console.log('[UI-Stream] elemento encontrado por UUID parcial:', c.id);
+      return c;
+    }
+  }
+  // 4. KPI por data-kpi-id (ex: 'kpi-eficiencia')
+  const kpiEl = document.querySelector(`[data-kpi-id="${CSS.escape(elementId)}"]`);
+  if (kpiEl) { console.log('[UI-Stream] elemento encontrado como KPI:', elementId); return kpiEl; }
+  // 5. KPI por label parcial
+  for (const el of document.querySelectorAll('[data-kpi-id]')) {
+    if ((el.dataset.kpiId || '').includes(lower)) {
+      console.log('[UI-Stream] KPI encontrado por label parcial:', el.dataset.kpiId);
+      return el;
+    }
+  }
+  // 6. Fallback: card-title contém o texto
+  for (const canvas of document.querySelectorAll('canvas[id]')) {
+    const title = (canvas.closest('.card')?.querySelector('.card-title')?.textContent ?? '').trim().toLowerCase();
+    if (title && title.includes(lower)) {
+      console.log('[UI-Stream] elemento encontrado por título:', title, '← procurado:', elementId);
+      return canvas;
+    }
+  }
+  console.warn('[UI-Stream] elemento NÃO encontrado para:', elementId,
+    '— canvases disponíveis:', [...document.querySelectorAll('canvas[id]')].map(c => c.id),
+    '— KPIs disponíveis:', [...document.querySelectorAll('[data-kpi-id]')].map(e => e.dataset.kpiId));
+  return null;
+}
+
+function _applyHighlight(elementId, label, overlayHtml) {
+  let target = _findHighlightTarget(elementId);
+  if (!target) {
+    console.warn('[UI-Stream] highlight: elemento não encontrado:', elementId);
+    return;
+  }
+
+  // Se o elemento não for canvas (é um div de lista), usa o card pai como alvo visual
+  if (target.tagName !== 'CANVAS' && !target.classList.contains('kpi')) {
+    target = target.closest('.card') || target;
+  }
+
+  // Scroll suave até o alvo
+  target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  // Remove overlay anterior se existir
+  document.getElementById('_ai-hl-overlay')?.remove();
+
+  // Aguarda o scroll antes de calcular a posição
+  setTimeout(() => {
+    const r = target.getBoundingClientRect();
+    if (!r.width) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = '_ai-hl-overlay';
+    const pad = overlayHtml ? 0 : 8;
+    overlay.style.left     = (r.left   - pad) + 'px';
+    overlay.style.top      = (r.top    - pad) + 'px';
+    overlay.style.width    = (r.width  + pad * 2) + 'px';
+    overlay.style.height   = (r.height + pad * 2) + 'px';
+    overlay.style.position = 'fixed';
+    overlay.style.zIndex   = '9990';
+    overlay.style.pointerEvents = 'none';
+    overlay.style.overflow = 'visible';
+
+    if (overlayHtml) {
+      // HTML customizado gerado pelo LLM — substitui o highlight padrão
+      overlay.className = 'ai-highlight-overlay ai-custom';
+      overlay.innerHTML = overlayHtml;
+    } else {
+      // Highlight padrão: borda amarela pulsante
+      overlay.className = 'ai-highlight-overlay';
+      overlay.style.borderRadius = '6px';
+      if (label) {
+        const tag = document.createElement('div');
+        tag.className = 'ai-highlight-label';
+        tag.textContent = label;
+        overlay.appendChild(tag);
+      }
+    }
+
+    document.body.appendChild(overlay);
+
+    // Remove após 5s
+    setTimeout(() => overlay.remove(), 5000);
+  }, 400);
+}
+
 // carrega histórico do chat e badges ao iniciar
 document.addEventListener('DOMContentLoaded', () => {
   loadChatHistory();
   pollAgenda();
   pollAlerts();
+  _connectUiStream();
 });
 
 // ── Alerts panel ─────────────────────────────────────────────────────────────

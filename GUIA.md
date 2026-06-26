@@ -1,4 +1,4 @@
-# MFG Control — Guia de Instalação e Uso
+# POSH IA Dashboard — Guia de Instalação e Uso
 
 ## Estrutura do projeto
 
